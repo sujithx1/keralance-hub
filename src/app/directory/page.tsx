@@ -1,4 +1,5 @@
 "use client";
+// Freelancer Directory - Live client-side filtering by category, location, availability, and search queries
 
 import { useState, useMemo, Suspense } from "react";
 import Link from "next/link";
