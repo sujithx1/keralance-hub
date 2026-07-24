@@ -1,0 +1,74 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #0B5D3B;
+  --color-primary-hover: #08492e;
+  --color-secondary: #083D29;
+  --color-accent: #C89B3C;
+  --color-accent-hover: #b0842e;
+  --color-bg-base: #F7F6F2;
+  --color-text-main: #083D29;
+  --color-text-muted: #5c7468;
+  
+  --font-sans: 'Poppins', system-ui, sans-serif;
+  --font-heading: 'Poppins', system-ui, sans-serif;
+  
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+}
+
+body {
+  background-color: var(--color-bg-base);
+  color: var(--color-text-main);
+  font-family: var(--font-sans);
+}
+
+/* Premium Kasavu Pattern Mesh */
+.bg-kasavu-pattern {
+  background-color: #F7F6F2;
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(11, 93, 59, 0.06) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(200, 155, 60, 0.05) 0px, transparent 50%),
+    radial-gradient(at 50% 100%, rgba(8, 61, 41, 0.04) 0px, transparent 50%);
+}
+
+/* Logo specific classes for exact visual identity matching */
+.logo-text {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  color: #0B5D3B;
+}
+
+/* Glassmorphism Cards */
+.glass-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(11, 93, 59, 0.12);
+}
+
+.glass-nav {
+  background: rgba(247, 246, 242, 0.9);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(11, 93, 59, 0.08);
+}
+
+/* Custom Scrollbar for Brand Colors */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F7F6F2;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #C89B3C;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #0B5D3B;
+}
