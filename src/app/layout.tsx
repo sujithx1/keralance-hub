@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+// Keralance Hub MVP release v1.0.0 - Premium community dashboard
 import { Plus_Jakarta_Sans, Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
