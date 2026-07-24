@@ -1,4 +1,5 @@
 "use client";
+// Job Board - Dynamic list, detail preview panel, and post gig slide-over forms
 
 import { useState, useMemo } from "react";
 import {
