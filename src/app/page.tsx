@@ -1,4 +1,5 @@
 "use client";
+// Keralance Hub Landing Page - Main view with modern Kerala illustration and highlight sections
 
 import { useState } from "react";
 import Link from "next/link";
