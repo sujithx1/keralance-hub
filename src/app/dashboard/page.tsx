@@ -1,4 +1,5 @@
 "use client";
+// User Dashboard - Analytics trackers, profile completion checklists, and saved jobs lists
 
 import { useState } from "react";
 import {
