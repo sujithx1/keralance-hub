@@ -41,7 +41,7 @@ async function seed() {
     .insert(users)
     .values({
       name: "sujith",
-      email: "sujith@keralancehub.com",
+      email: "sujith.c.dev@gmail.com",
       passwordHash: adminHash,
       role: "admin",
       phone: "7994591023",
@@ -144,7 +144,7 @@ async function seed() {
 
   // 4. Create Skills
   const skillNames = ["Next.js", "React Native", "PostgreSQL", "Go", "Figma", "Webflow", "Python", "FastAPI"];
-  const insertedSkills = [];
+  const insertedSkills: { id: string; name: string }[] = [];
   for (const name of skillNames) {
     const [s] = await db.insert(skills).values({ name }).returning();
     insertedSkills.push(s);
