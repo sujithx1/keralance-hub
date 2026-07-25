@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { X, User, Shield, Sparkles, Phone, Lock } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
+import { axiosInstance } from "@/lib/api";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -16,11 +18,54 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
   const [debugCode, setDebugCode] = useState("");
   const [role, setRole] = useState<"admin" | "user" | "freelancer">("freelancer");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+
+  // TanStack Query Send OTP Mutation
+  const sendOtpMutation = useMutation({
+    mutationFn: async (phoneNum: string) => {
+      const payload: any = { phone: phoneNum };
+      const response = await axiosInstance.post("/auth/otp/send", payload);
+      return response.data;
+    },
+    onSuccess: (data) => {
+      setDebugCode(data.debugCode || "");
+      setOtpSent(true);
+      setError("");
+    },
+    onError: (err: any) => {
+      setError(err.response?.data?.error || "Failed to send verification code. Try again.");
+    },
+  });
+
+  // TanStack Query Verify OTP Mutation
+  const verifyOtpMutation = useMutation({
+    mutationFn: async (verificationData: { phone: string; code: string; name?: string; role?: string }) => {
+      const response = await axiosInstance.post("/auth/otp/verify", verificationData);
+      return response.data;
+    },
+    onSuccess: (data) => {
+      const { user, accessToken, refreshToken } = data.data;
+      
+      // Store JWTs locally
+      localStorage.setItem("accessToken", accessToken);
+      localStorage.setItem("refreshToken", refreshToken);
+
+      // Trigger context updates
+      onSuccess({
+        name: user.name,
+        email: user.email || `${user.phone}@keralance.dev`,
+        role: user.role,
+      });
+      setError("");
+      onClose();
+    },
+    onError: (err: any) => {
+      setError(err.response?.data?.error || "Invalid verification code.");
+    },
+  });
 
   if (!isOpen) return null;
 
-  const handleSendOtp = async (e: React.FormEvent) => {
+  const handleSendOtp = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     
@@ -34,19 +79,10 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
       return;
     }
 
-    setLoading(true);
-
-    // Simulate OTP dispatch
-    setTimeout(() => {
-      setLoading(false);
-      // Hardcode demo codes or random ones
-      const randomCode = Math.floor(100000 + Math.random() * 900000).toString();
-      setDebugCode(randomCode);
-      setOtpSent(true);
-    }, 800);
+    sendOtpMutation.mutate(phone);
   };
 
-  const handleVerifyOtp = async (e: React.FormEvent) => {
+  const handleVerifyOtp = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
@@ -55,38 +91,12 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
       return;
     }
 
-    setLoading(true);
-
-    setTimeout(() => {
-      setLoading(false);
-      if (otp !== debugCode && otp !== "123456") {
-        setError("Invalid verification code");
-        return;
-      }
-
-      // Determine user credentials based on input parameters
-      let userName = name || "Member";
-      let userRole = role;
-
-      // Map special default admin account values
-      if (phone === "7994591023") {
-        userName = "sujith";
-        userRole = "admin";
-      } else if (phone === "7994591024") {
-        userName = "Gautham Krishna";
-        userRole = "user";
-      } else if (phone === "7994591025") {
-        userName = "Ananya Pillai";
-        userRole = "user";
-      }
-
-      onSuccess({
-        name: userName,
-        email: `${phone}@keralance.dev`,
-        role: userRole,
-      });
-      onClose();
-    }, 800);
+    verifyOtpMutation.mutate({
+      phone,
+      code: otp,
+      name: tab === "register" ? name : undefined,
+      role: tab === "register" ? role : undefined,
+    });
   };
 
   const handleReset = () => {
@@ -95,6 +105,8 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
     setDebugCode("");
     setError("");
   };
+
+  const loading = sendOtpMutation.isPending || verifyOtpMutation.isPending;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -167,7 +179,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
 
             {otpSent && (
               <div className="p-3.5 bg-accent/10 border border-accent/20 rounded-xl text-primary text-xs font-semibold text-center animate-pulse">
-                🔑 Demo Verification Code: <span className="text-accent text-sm font-bold">{debugCode}</span>
+                🔑 Verification Code (OTP): <span className="text-accent text-sm font-bold">{debugCode}</span>
               </div>
             )}
 
