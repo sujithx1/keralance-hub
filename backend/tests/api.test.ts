@@ -29,4 +29,25 @@ describe("keralance HUB Integration Tests", () => {
     expect(body.success).toBe(false);
     expect(body.error).toBeDefined();
   });
+
+  it("POST /auth/otp/send should generate OTP successfully or fail if DB is offline", async () => {
+    const res = await app.request("/auth/otp/send", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        phone: "+917994591023",
+      }),
+    });
+    
+    expect([200, 500]).toContain(res.status);
+    const body = await res.json();
+    if (res.status === 200) {
+      expect(body.success).toBe(true);
+      expect(body.debugCode).toBeDefined();
+    } else {
+      expect(body.success).toBe(false);
+    }
+  });
 });
