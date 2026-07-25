@@ -14,6 +14,7 @@ import {
 import { db } from "../db/connection";
 import { OtpTable, RefreshTokenTable, UserTable } from "../schema/db.schema";
 import { eq, and } from "drizzle-orm";
+import { smsService } from "../services/sms.service";
 
 const authRouter = new Hono();
 
@@ -131,6 +132,9 @@ authRouter.post("/otp/send", validateBody(sendOtpSchema), async (c) => {
     codeHash,
     expiresAt,
   });
+
+  // Delegate dispatch to the decoupled SMS Service
+  await smsService.sendOtp(phone, code);
 
   return c.json({
     success: true,
