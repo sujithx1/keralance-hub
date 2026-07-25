@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import AuthModal from "@/components/AuthModal";
 
 // Views
 import HomeView from "@/views/HomeView";
@@ -19,6 +20,10 @@ export default function App() {
   const [activePage, setActivePage] = useState<string>("home");
   const [selectedFreelancerId, setSelectedFreelancerId] = useState<string>("");
   const [savedJobs, setSavedJobs] = useState<string[]>(["j1", "j3"]); // default pre-saved
+  
+  // Auth state
+  const [currentUser, setCurrentUser] = useState<{ name: string; email: string; role: "admin" | "user" | "freelancer" } | null>(null);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
 
   const handleSelectProfile = (id: string) => {
     setSelectedFreelancerId(id);
@@ -32,6 +37,11 @@ export default function App() {
     } else {
       setSavedJobs([...savedJobs, id]);
     }
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    setActivePage("home");
   };
 
   // Render view based on page state
@@ -67,11 +77,30 @@ export default function App() {
       case "resources":
         return <ResourcesView />;
       case "dashboard":
+        if (!currentUser) {
+          // Intercept and open login if guest tries to access dashboard
+          setTimeout(() => setIsAuthOpen(true), 0);
+          return (
+            <div className="min-h-screen flex items-center justify-center bg-kasavu-pattern py-20 px-6">
+              <div className="text-center bg-white border border-primary/10 p-10 rounded-3xl max-w-sm shadow-md">
+                <h3 className="font-heading font-extrabold text-xl text-primary">Access Restricted</h3>
+                <p className="text-xs text-text-muted mt-2">Please sign in to access your custom keralance HUB member dashboard.</p>
+                <button
+                  onClick={() => setIsAuthOpen(true)}
+                  className="bg-primary hover:bg-primary-hover text-white px-6 py-2.5 rounded-xl font-heading font-bold text-xs mt-6 transition-all"
+                >
+                  Sign In Now
+                </button>
+              </div>
+            </div>
+          );
+        }
         return (
           <DashboardView
             savedJobs={savedJobs}
             onToggleSaveJob={handleToggleSaveJob}
             onNavigate={setActivePage}
+            currentUser={currentUser}
           />
         );
       case "about":
@@ -93,12 +122,25 @@ export default function App() {
   return (
     <div className="flex flex-col min-h-screen bg-bg-base font-sans antialiased text-text-main">
       {/* Platform Navigation */}
-      <Navbar activePage={activePage} setActivePage={setActivePage} />
+      <Navbar 
+        activePage={activePage} 
+        setActivePage={setActivePage} 
+        currentUser={currentUser}
+        onOpenAuth={() => setIsAuthOpen(true)}
+        onLogout={handleLogout}
+      />
       
       {/* Primary SPA Content */}
       <main className="flex-1 pt-16">
         {renderView()}
       </main>
+
+      {/* Auth Modal overlay */}
+      <AuthModal 
+        isOpen={isAuthOpen}
+        onClose={() => setIsAuthOpen(false)}
+        onSuccess={setCurrentUser}
+      />
 
       {/* Platform Footer */}
       <Footer setActivePage={setActivePage} />
