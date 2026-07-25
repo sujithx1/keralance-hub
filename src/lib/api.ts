@@ -1,7 +1,8 @@
 import axios from "axios";
+import { env } from "./env";
 
 export const axiosInstance = axios.create({
-  baseURL: "http://localhost:3000",
+  baseURL: env.VITE_API_URL,
   headers: {
     "Content-Type": "application/json",
   },
@@ -61,7 +62,7 @@ axiosInstance.interceptors.response.use(
       }
 
       try {
-        const { data } = await axios.post("http://localhost:3000/auth/refresh", {
+        const { data } = await axios.post(`${env.VITE_API_URL}/auth/refresh`, {
           refreshToken,
         });
 
