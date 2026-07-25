@@ -36,7 +36,13 @@ export class SmsService {
    * @returns A promise resolving to a boolean representing dispatch success status
    */
   async sendOtp(phone: string, code: string, message?: string): Promise<boolean> {
-    logger.info(`📱 [SMS Service] Dispatching OTP code: ${code} to phone number: ${phone}`);
+    // Format to E.164 format: prepend '+91' (India) if '+' is missing
+    let formattedPhone = phone.trim();
+    if (!formattedPhone.startsWith("+")) {
+      formattedPhone = `+91${formattedPhone}`;
+    }
+
+    logger.info(`📱 [SMS Service] Dispatching OTP code: ${code} to phone number: ${formattedPhone}`);
 
     // Hash code using Argon2
     const codeHash = await Bun.password.hash(code, { algorithm: "argon2id" });
@@ -44,10 +50,10 @@ export class SmsService {
     expiresAt.setMinutes(expiresAt.getMinutes() + 5); // 5 minutes TTL
 
     // Invalidate previous active OTPs in cache
-    this.otpCache.delete(phone);
+    this.otpCache.delete(formattedPhone);
 
     // Save active OTP to local cache
-    this.otpCache.set(phone, {
+    this.otpCache.set(formattedPhone, {
       codeHash,
       expiresAt,
       attempts: 0,
@@ -61,9 +67,9 @@ export class SmsService {
         await this.client.messages.create({
           body: smsBody,
           from: fromNumber,
-          to: phone,
+          to: formattedPhone,
         });
-        logger.info(`✅ [SMS Service] Live Twilio SMS sent successfully to ${phone}`);
+        logger.info(`✅ [SMS Service] Live Twilio SMS sent successfully to ${formattedPhone}`);
         return true;
       } catch (err: any) {
         logger.error(err, `❌ [SMS Service] Failed to send SMS via Twilio to ${phone}`);
@@ -83,24 +89,29 @@ export class SmsService {
    * @returns A promise resolving to a boolean representing verification success status
    */
   async verifyOtp(phone: string, code: string): Promise<boolean> {
-    const record = this.otpCache.get(phone);
+    let formattedPhone = phone.trim();
+    if (!formattedPhone.startsWith("+")) {
+      formattedPhone = `+91${formattedPhone}`;
+    }
+
+    const record = this.otpCache.get(formattedPhone);
 
     if (!record) {
-      logger.warn(`⚠️ [SMS Service] Verification failed. No OTP requested for ${phone}`);
+      logger.warn(`⚠️ [SMS Service] Verification failed. No OTP requested for ${formattedPhone}`);
       return false;
     }
 
     // Expiry verification
     if (new Date() > record.expiresAt) {
-      logger.warn(`⚠️ [SMS Service] Verification failed. OTP expired for ${phone}`);
-      this.otpCache.delete(phone);
+      logger.warn(`⚠️ [SMS Service] Verification failed. OTP expired for ${formattedPhone}`);
+      this.otpCache.delete(formattedPhone);
       return false;
     }
 
     // Maximum attempts rate limiting (3 strikes)
     if (record.attempts >= 3) {
-      logger.warn(`⚠️ [SMS Service] Verification failed. Too many attempts for ${phone}`);
-      this.otpCache.delete(phone);
+      logger.warn(`⚠️ [SMS Service] Verification failed. Too many attempts for ${formattedPhone}`);
+      this.otpCache.delete(formattedPhone);
       return false;
     }
 
@@ -109,14 +120,14 @@ export class SmsService {
     
     if (!isValid) {
       record.attempts += 1;
-      this.otpCache.set(phone, record); // Update attempt count in cache
-      logger.warn(`⚠️ [SMS Service] Verification failed. Invalid code attempt count ${record.attempts} for ${phone}`);
+      this.otpCache.set(formattedPhone, record); // Update attempt count in cache
+      logger.warn(`⚠️ [SMS Service] Verification failed. Invalid code attempt count ${record.attempts} for ${formattedPhone}`);
       return false;
     }
 
     // Success - remove from cache
-    this.otpCache.delete(phone);
-    logger.info(`✅ [SMS Service] OTP verified successfully for ${phone}`);
+    this.otpCache.delete(formattedPhone);
+    logger.info(`✅ [SMS Service] OTP verified successfully for ${formattedPhone}`);
     return true;
   }
 }
