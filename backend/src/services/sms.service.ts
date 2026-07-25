@@ -1,9 +1,26 @@
 import { logger } from "../lib/logger";
+import twilio from "twilio";
 
 export class SmsService {
+  private client: any = null;
+
+  constructor() {
+    const sid = process.env.TWILIO_ACCOUNT_SID;
+    const token = process.env.TWILIO_AUTH_TOKEN;
+    
+    if (sid && token) {
+      try {
+        this.client = twilio(sid, token);
+        logger.info("📱 [SMS Service] Twilio client initialized successfully.");
+      } catch (err: any) {
+        logger.error(err, "⚠️ [SMS Service] Failed to initialize Twilio client with credentials.");
+      }
+    }
+  }
+
   /**
    * Sends an OTP code to a designated phone number.
-   * Encapsulated to make it easy to move to an independent microservice later.
+   * Activates live Twilio API calls if environment credentials are present.
    * 
    * @param phone The recipient's phone number in E.164 format (e.g. +917994591023)
    * @param code The 6-digit verification code string
@@ -12,40 +29,25 @@ export class SmsService {
   async sendOtp(phone: string, code: string): Promise<boolean> {
     logger.info(`📱 [SMS Service] Dispatching OTP code: ${code} to phone number: ${phone}`);
 
-    // =========================================================================
-    // FUTURE PRODUCTION INTEGRATION STEPS (To move to a separate project):
-    // =========================================================================
-    // 
-    // Option A: Twilio integration
-    // ----------------------------
-    // import twilio from "twilio";
-    // const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-    // await twilioClient.messages.create({
-    //   body: `Your keralance HUB verification code is: ${code}. It expires in 5 minutes.`,
-    //   from: process.env.TWILIO_PHONE_NUMBER,
-    //   to: phone
-    // });
-    //
-    // Option B: MSG91 integration (Direct HTTP Fetch)
-    // ------------------------------------------------
-    // const response = await fetch("https://control.msg91.com/api/v5/otp", {
-    //   method: "POST",
-    //   headers: {
-    //     "Content-Type": "application/json",
-    //     "authkey": process.env.MSG91_AUTH_KEY as string,
-    //   },
-    //   body: JSON.stringify({
-    //     template_id: process.env.MSG91_TEMPLATE_ID,
-    //     mobile: phone.replace("+", ""),
-    //     otp: code
-    //   })
-    // });
-    // if (!response.ok) throw new Error("Gateway failed");
-    //
-    // =========================================================================
+    const fromNumber = process.env.TWILIO_PHONE_NUMBER;
 
-    // Simulated successful SMS dispatch for local development
-    return true;
+    if (this.client && fromNumber) {
+      try {
+        await this.client.messages.create({
+          body: `Your keralance HUB verification code is: ${code}. It expires in 5 minutes.`,
+          from: fromNumber,
+          to: phone,
+        });
+        logger.info(`✅ [SMS Service] Live Twilio SMS sent successfully to ${phone}`);
+        return true;
+      } catch (err: any) {
+        logger.error(err, `❌ [SMS Service] Failed to send SMS via Twilio to ${phone}`);
+        throw err;
+      }
+    } else {
+      logger.warn(`⚠️ [SMS Service] Twilio credentials or phone number missing. Mocking success for code: ${code}`);
+      return true;
+    }
   }
 }
 
