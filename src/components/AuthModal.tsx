@@ -195,7 +195,6 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
                   >
                     <option value="freelancer">Freelancer (Sell services)</option>
                     <option value="user">Client (Hire freelancers)</option>
-                    <option value="admin">Administrator (Moderate system)</option>
                   </select>
                 </div>
               </div>

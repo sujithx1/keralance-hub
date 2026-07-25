@@ -34,16 +34,17 @@ async function seed() {
 
   // Hash standard passwords
   const passwordHash = await Bun.password.hash("password123", { algorithm: "argon2id" });
-  const adminHash = await Bun.password.hash("adminpassword", { algorithm: "argon2id" });
+  const adminHash = await Bun.password.hash("Sujith@123", { algorithm: "argon2id" });
 
   // 2. Create Users
   const [admin] = await db
     .insert(users)
     .values({
-      name: "Admin Hub",
-      email: "admin@keralancehub.com",
+      name: "sujith",
+      email: "sujith@keralancehub.com",
       passwordHash: adminHash,
       role: "admin",
+      phone: "7994591023",
       emailVerified: true,
     })
     .returning();
