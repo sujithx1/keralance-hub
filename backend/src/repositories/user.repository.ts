@@ -1,16 +1,16 @@
 import { eq, and, isNull, like, or, desc, count } from "drizzle-orm";
 import { db } from "../db/connection";
-import { users } from "../schema/db.schema";
+import { UserTable } from "../schema/db.schema";
 
-export type UserInsert = typeof users.$inferInsert;
-export type UserSelect = typeof users.$inferSelect;
+export type UserInsert = typeof UserTable.$inferInsert;
+export type UserSelect = typeof UserTable.$inferSelect;
 
 export class UserRepository {
   async findById(id: string): Promise<UserSelect | null> {
     const results = await db
       .select()
-      .from(users)
-      .where(and(eq(users.id, id), isNull(users.deletedAt)))
+      .from(UserTable)
+      .where(and(eq(UserTable.id, id), isNull(UserTable.deletedAt)))
       .limit(1);
     return results[0] || null;
   }
@@ -18,18 +18,18 @@ export class UserRepository {
   async findByEmail(email: string): Promise<UserSelect | null> {
     const results = await db
       .select()
-      .from(users)
-      .where(and(eq(users.email, email.toLowerCase()), isNull(users.deletedAt)))
+      .from(UserTable)
+      .where(and(eq(UserTable.email, email.toLowerCase()), isNull(UserTable.deletedAt)))
       .limit(1);
     return results[0] || null;
   }
 
   async create(data: UserInsert): Promise<UserSelect> {
     const results = await db
-      .insert(users)
+      .insert(UserTable)
       .values({
         ...data,
-        email: data.email.toLowerCase(),
+        email: data.email ? data.email.toLowerCase() : null,
       })
       .returning();
     return results[0];
@@ -37,21 +37,21 @@ export class UserRepository {
 
   async update(id: string, data: Partial<UserInsert>): Promise<UserSelect | null> {
     const results = await db
-      .update(users)
+      .update(UserTable)
       .set({
         ...data,
         updatedAt: new Date(),
       })
-      .where(and(eq(users.id, id), isNull(users.deletedAt)))
+      .where(and(eq(UserTable.id, id), isNull(UserTable.deletedAt)))
       .returning();
     return results[0] || null;
   }
 
   async softDelete(id: string): Promise<boolean> {
     const results = await db
-      .update(users)
+      .update(UserTable)
       .set({ deletedAt: new Date(), updatedAt: new Date() })
-      .where(eq(users.id, id))
+      .where(eq(UserTable.id, id))
       .returning();
     return results.length > 0;
   }
@@ -64,13 +64,13 @@ export class UserRepository {
     const offset = (page - 1) * limit;
     
     // Build query conditions
-    const baseConditions = [isNull(users.deletedAt)];
+    const baseConditions = [isNull(UserTable.deletedAt)];
     if (search) {
       baseConditions.push(
         or(
-          like(users.name, `%${search}%`),
-          like(users.email, `%${search}%`),
-          like(users.phone, `%${search}%`)
+          like(UserTable.name, `%${search}%`),
+          like(UserTable.email, `%${search}%`),
+          like(UserTable.phone, `%${search}%`)
         )!
       );
     }
@@ -79,14 +79,14 @@ export class UserRepository {
 
     const [totalResult] = await db
       .select({ count: count() })
-      .from(users)
+      .from(UserTable)
       .where(whereClause);
 
     const data = await db
       .select()
-      .from(users)
+      .from(UserTable)
       .where(whereClause)
-      .orderBy(desc(users.createdAt))
+      .orderBy(desc(UserTable.createdAt))
       .limit(limit)
       .offset(offset);
 
@@ -98,9 +98,9 @@ export class UserRepository {
 
   async setStatus(id: string, status: "active" | "banned"): Promise<UserSelect | null> {
     const results = await db
-      .update(users)
+      .update(UserTable)
       .set({ status, updatedAt: new Date() })
-      .where(and(eq(users.id, id), isNull(users.deletedAt)))
+      .where(and(eq(UserTable.id, id), isNull(UserTable.deletedAt)))
       .returning();
     return results[0] || null;
   }

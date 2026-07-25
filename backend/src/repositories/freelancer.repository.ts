@@ -1,73 +1,73 @@
-import { eq, and, or, like, desc, count, sql, inArray, isNull } from "drizzle-orm";
+import { eq, and, or, like, desc, count, sql } from "drizzle-orm";
 import { db } from "../db/connection";
 import {
-  users,
-  freelancerProfiles,
-  skills,
-  freelancerSkills,
-  portfolios,
-  experiences,
-  educations,
-  reviews,
+  UserTable,
+  FreelancerProfileTable,
+  SkillTable,
+  FreelancerSkillTable,
+  PortfolioTable,
+  ExperienceTable,
+  EducationTable,
+  ReviewTable,
 } from "../schema/db.schema";
 
-export type FreelancerInsert = typeof freelancerProfiles.$inferInsert;
-export type FreelancerSelect = typeof freelancerProfiles.$inferSelect;
+export type FreelancerInsert = typeof FreelancerProfileTable.$inferInsert;
+export type FreelancerSelect = typeof FreelancerProfileTable.$inferSelect;
 
 export class FreelancerRepository {
   async getProfile(userId: string) {
     const profile = await db
       .select()
-      .from(freelancerProfiles)
-      .where(eq(freelancerProfiles.userId, userId))
+      .from(FreelancerProfileTable)
+      .where(eq(FreelancerProfileTable.userId, userId))
       .limit(1);
 
     if (!profile[0]) return null;
 
     // Fetch associated relations
-    const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    const [user] = await db.select().from(UserTable).where(eq(UserTable.id, userId)).limit(1);
     
     // Fetch experiences
     const exps = await db
       .select()
-      .from(experiences)
-      .where(eq(experiences.freelancerId, userId))
-      .orderBy(desc(experiences.startDate));
+      .from(ExperienceTable)
+      .where(eq(ExperienceTable.freelancerId, userId))
+      .orderBy(desc(ExperienceTable.startDate));
 
     // Fetch educations
     const eds = await db
       .select()
-      .from(educations)
-      .where(eq(educations.freelancerId, userId))
-      .orderBy(desc(educations.startDate));
+      .from(EducationTable)
+      .where(eq(EducationTable.freelancerId, userId))
+      .orderBy(desc(EducationTable.startDate));
 
     // Fetch portfolio items
     const ports = await db
       .select()
-      .from(portfolios)
-      .where(eq(portfolios.freelancerId, userId))
-      .orderBy(desc(portfolios.createdAt));
+      .from(PortfolioTable)
+      .where(eq(PortfolioTable.freelancerId, userId))
+      .orderBy(desc(PortfolioTable.createdAt));
 
     // Fetch skills
     const skillList = await db
-      .select({ id: skills.id, name: skills.name })
-      .from(freelancerSkills)
-      .innerJoin(skills, eq(freelancerSkills.skillId, skills.id))
-      .where(eq(freelancerSkills.freelancerId, userId));
+      .select({ id: SkillTable.id, name: SkillTable.name })
+      .from(FreelancerSkillTable)
+      .innerJoin(SkillTable, eq(FreelancerSkillTable.skillId, SkillTable.id))
+      .where(eq(FreelancerSkillTable.freelancerId, userId));
 
     // Fetch reviews
     const revs = await db
       .select({
-        id: reviews.id,
-        rating: reviews.rating,
-        comment: reviews.comment,
-        createdAt: reviews.createdAt,
-        reviewerName: users.name,
+        id: ReviewTable.id,
+        rating: ReviewTable.rating,
+        comment: ReviewTable.comment,
+        createdAt: ReviewTable.createdAt,
+        reviewerName: UserTable.name,
       })
-      .from(reviews)
-      .innerJoin(users, eq(reviews.reviewerId, users.id))
-      .where(eq(reviews.freelancerId, userId))
-      .orderBy(desc(reviews.createdAt));
+      .from(ReviewTable)
+      .innerJoin(UserTable, eq(ReviewTable.reviewerId, UserTable.id))
+      .where(eq(ReviewTable.freelancerId, userId))
+      .orderBy(desc(ReviewTable.createdAt));
 
     return {
       ...profile[0],
@@ -89,20 +89,20 @@ export class FreelancerRepository {
   async upsertProfile(userId: string, data: Partial<FreelancerInsert>): Promise<FreelancerSelect> {
     const existing = await db
       .select()
-      .from(freelancerProfiles)
-      .where(eq(freelancerProfiles.userId, userId))
+      .from(FreelancerProfileTable)
+      .where(eq(FreelancerProfileTable.userId, userId))
       .limit(1);
 
     if (existing[0]) {
       const results = await db
-        .update(freelancerProfiles)
+        .update(FreelancerProfileTable)
         .set({ ...data, updatedAt: new Date() })
-        .where(eq(freelancerProfiles.userId, userId))
+        .where(eq(FreelancerProfileTable.userId, userId))
         .returning();
       return results[0];
     } else {
       const results = await db
-        .insert(freelancerProfiles)
+        .insert(FreelancerProfileTable)
         .values({
           userId,
           title: data.title || "Freelancer",
@@ -129,35 +129,27 @@ export class FreelancerRepository {
     const limit = filters.limit || 10;
     const offset = (page - 1) * limit;
 
-    // Setup base query using Drizzle relations or manual joins
-    let profileIdsQuery = db
-      .selectDistinct({ userId: freelancerProfiles.userId })
-      .from(freelancerProfiles)
-      .innerJoin(users, eq(freelancerProfiles.userId, users.id))
-      .leftJoin(freelancerSkills, eq(freelancerProfiles.userId, freelancerSkills.freelancerId))
-      .leftJoin(skills, eq(freelancerSkills.skillId, skills.id));
-
-    const conditions = [eq(users.status, "active"), isNull(users.deletedAt)];
+    const conditions = [eq(UserTable.status, "active"), isNull(UserTable.deletedAt)];
 
     if (filters.category && filters.category !== "All") {
-      conditions.push(eq(freelancerProfiles.title, filters.category)); // or title matches role pattern
+      conditions.push(eq(FreelancerProfileTable.title, filters.category));
     }
 
     if (filters.location && filters.location !== "All") {
-      conditions.push(eq(freelancerProfiles.location, filters.location));
+      conditions.push(eq(FreelancerProfileTable.location, filters.location));
     }
 
     if (filters.onlyAvailable) {
-      conditions.push(eq(freelancerProfiles.availability, "available"));
+      conditions.push(eq(FreelancerProfileTable.availability, "available"));
     }
 
     if (filters.searchQuery) {
       conditions.push(
         or(
-          like(users.name, `%${filters.searchQuery}%`),
-          like(freelancerProfiles.title, `%${filters.searchQuery}%`),
-          like(freelancerProfiles.bio, `%${filters.searchQuery}%`),
-          like(skills.name, `%${filters.searchQuery}%`)
+          like(UserTable.name, `%${filters.searchQuery}%`),
+          like(FreelancerProfileTable.title, `%${filters.searchQuery}%`),
+          like(FreelancerProfileTable.bio, `%${filters.searchQuery}%`),
+          like(SkillTable.name, `%${filters.searchQuery}%`)
         )!
       );
     }
@@ -167,38 +159,38 @@ export class FreelancerRepository {
     // Get count of distinct freelancer IDs
     const countQuery = await db
       .select({ count: count() })
-      .from(freelancerProfiles)
-      .innerJoin(users, eq(freelancerProfiles.userId, users.id))
-      .leftJoin(freelancerSkills, eq(freelancerProfiles.userId, freelancerSkills.freelancerId))
-      .leftJoin(skills, eq(freelancerSkills.skillId, skills.id))
+      .from(FreelancerProfileTable)
+      .innerJoin(UserTable, eq(FreelancerProfileTable.userId, UserTable.id))
+      .leftJoin(FreelancerSkillTable, eq(FreelancerProfileTable.userId, FreelancerSkillTable.freelancerId))
+      .leftJoin(SkillTable, eq(FreelancerSkillTable.skillId, SkillTable.id))
       .where(whereClause);
 
     // Fetch paginated freelancer profiles
     const rawProfiles = await db
       .select({
-        userId: freelancerProfiles.userId,
-        title: freelancerProfiles.title,
-        bio: freelancerProfiles.bio,
-        hourlyRate: freelancerProfiles.hourlyRate,
-        location: freelancerProfiles.location,
-        availability: freelancerProfiles.availability,
-        name: users.name,
-        avatarUrl: users.avatarUrl,
+        userId: FreelancerProfileTable.userId,
+        title: FreelancerProfileTable.title,
+        bio: FreelancerProfileTable.bio,
+        hourlyRate: FreelancerProfileTable.hourlyRate,
+        location: FreelancerProfileTable.location,
+        availability: FreelancerProfileTable.availability,
+        name: UserTable.name,
+        avatarUrl: UserTable.avatarUrl,
       })
-      .from(freelancerProfiles)
-      .innerJoin(users, eq(freelancerProfiles.userId, users.id))
-      .leftJoin(freelancerSkills, eq(freelancerProfiles.userId, freelancerSkills.freelancerId))
-      .leftJoin(skills, eq(freelancerSkills.skillId, skills.id))
+      .from(FreelancerProfileTable)
+      .innerJoin(UserTable, eq(FreelancerProfileTable.userId, UserTable.id))
+      .leftJoin(FreelancerSkillTable, eq(FreelancerProfileTable.userId, FreelancerSkillTable.freelancerId))
+      .leftJoin(SkillTable, eq(FreelancerSkillTable.skillId, SkillTable.id))
       .where(whereClause)
       .groupBy(
-        freelancerProfiles.userId,
-        freelancerProfiles.title,
-        freelancerProfiles.bio,
-        freelancerProfiles.hourlyRate,
-        freelancerProfiles.location,
-        freelancerProfiles.availability,
-        users.name,
-        users.avatarUrl
+        FreelancerProfileTable.userId,
+        FreelancerProfileTable.title,
+        FreelancerProfileTable.bio,
+        FreelancerProfileTable.hourlyRate,
+        FreelancerProfileTable.location,
+        FreelancerProfileTable.availability,
+        UserTable.name,
+        UserTable.avatarUrl
       )
       .limit(limit)
       .offset(offset);
@@ -207,18 +199,18 @@ export class FreelancerRepository {
     const data = await Promise.all(
       rawProfiles.map(async (p) => {
         const freelancerSkillsList = await db
-          .select({ name: skills.name })
-          .from(freelancerSkills)
-          .innerJoin(skills, eq(freelancerSkills.skillId, skills.id))
-          .where(eq(freelancerSkills.freelancerId, p.userId));
+          .select({ name: SkillTable.name })
+          .from(FreelancerSkillTable)
+          .innerJoin(SkillTable, eq(FreelancerSkillTable.skillId, SkillTable.id))
+          .where(eq(FreelancerSkillTable.freelancerId, p.userId));
 
         const ratingResult = await db
           .select({
-            avgRating: sql<number>`COALESCE(AVG(${reviews.rating}), 0.0)`,
-            reviewsCount: count(reviews.id),
+            avgRating: sql<number>`COALESCE(AVG(${ReviewTable.rating}), 0.0)`,
+            reviewsCount: count(ReviewTable.id),
           })
-          .from(reviews)
-          .where(eq(reviews.freelancerId, p.userId));
+          .from(ReviewTable)
+          .where(eq(ReviewTable.freelancerId, p.userId));
 
         return {
           id: p.userId,
@@ -249,68 +241,66 @@ export class FreelancerRepository {
       const cleanName = name.trim().toLowerCase();
       if (!cleanName) continue;
 
-      // Find or create skill
-      let skill = await db.select().from(skills).where(eq(skills.name, cleanName)).limit(1);
+      let skill = await db.select().from(SkillTable).where(eq(SkillTable.name, cleanName)).limit(1);
       let skillId = skill[0]?.id;
 
       if (!skillId) {
-        const newSkill = await db.insert(skills).values({ name: cleanName }).returning();
+        const newSkill = await db.insert(SkillTable).values({ name: cleanName }).returning();
         skillId = newSkill[0].id;
       }
 
-      // Check bridge table relation
       const link = await db
         .select()
-        .from(freelancerSkills)
+        .from(FreelancerSkillTable)
         .where(
           and(
-            eq(freelancerSkills.freelancerId, freelancerId),
-            eq(freelancerSkills.skillId, skillId)
+            eq(FreelancerSkillTable.freelancerId, freelancerId),
+            eq(FreelancerSkillTable.skillId, skillId)
           )
         )
         .limit(1);
 
       if (!link[0]) {
-        await db.insert(freelancerSkills).values({ freelancerId, skillId });
+        await db.insert(FreelancerSkillTable).values({ freelancerId, skillId });
       }
     }
   }
 
   async clearSkills(freelancerId: string): Promise<void> {
-    await db.delete(freelancerSkills).where(eq(freelancerSkills.freelancerId, freelancerId));
+    await db.delete(FreelancerSkillTable).where(eq(FreelancerSkillTable.freelancerId, freelancerId));
   }
 
   // Manage Portfolio Items
-  async addPortfolio(freelancerId: string, item: typeof portfolios.$inferInsert) {
-    return await db.insert(portfolios).values({ ...item, freelancerId }).returning();
+  async addPortfolio(freelancerId: string, item: typeof PortfolioTable.$inferInsert) {
+    return await db.insert(PortfolioTable).values({ ...item, freelancerId }).returning();
   }
 
   async deletePortfolio(id: string, freelancerId: string) {
     return await db
-      .delete(portfolios)
-      .where(and(eq(portfolios.id, id), eq(portfolios.freelancerId, freelancerId)));
+      .delete(PortfolioTable)
+      .where(and(eq(PortfolioTable.id, id), eq(PortfolioTable.freelancerId, freelancerId)));
   }
 
   // Manage Experiences
-  async addExperience(freelancerId: string, item: typeof experiences.$inferInsert) {
-    return await db.insert(experiences).values({ ...item, freelancerId }).returning();
+  async addExperience(freelancerId: string, item: typeof ExperienceTable.$inferInsert) {
+    return await db.insert(ExperienceTable).values({ ...item, freelancerId }).returning();
   }
 
   async deleteExperience(id: string, freelancerId: string) {
     return await db
-      .delete(experiences)
-      .where(and(eq(experiences.id, id), eq(experiences.freelancerId, freelancerId)));
+      .delete(ExperienceTable)
+      .where(and(eq(ExperienceTable.id, id), eq(ExperienceTable.freelancerId, freelancerId)));
   }
 
   // Manage Educations
-  async addEducation(freelancerId: string, item: typeof educations.$inferInsert) {
-    return await db.insert(educations).values({ ...item, freelancerId }).returning();
+  async addEducation(freelancerId: string, item: typeof EducationTable.$inferInsert) {
+    return await db.insert(EducationTable).values({ ...item, freelancerId }).returning();
   }
 
   async deleteEducation(id: string, freelancerId: string) {
     return await db
-      .delete(educations)
-      .where(and(eq(educations.id, id), eq(educations.freelancerId, freelancerId)));
+      .delete(EducationTable)
+      .where(and(eq(EducationTable.id, id), eq(EducationTable.freelancerId, freelancerId)));
   }
 }
 export const freelancerRepository = new FreelancerRepository();

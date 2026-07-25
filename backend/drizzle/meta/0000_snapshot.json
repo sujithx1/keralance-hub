@@ -1,11 +1,11 @@
 {
-  "id": "2eeab7c9-9cd3-486c-abaa-6069ef3f2081",
+  "id": "f3942ec8-7d1a-4b57-8784-1fbea4311040",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
-    "public.applications": {
-      "name": "applications",
+    "public.ApplicationTable": {
+      "name": "ApplicationTable",
       "schema": "",
       "columns": {
         "id": {
@@ -56,10 +56,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "applications_job_id_jobs_id_fk": {
-          "name": "applications_job_id_jobs_id_fk",
-          "tableFrom": "applications",
-          "tableTo": "jobs",
+        "ApplicationTable_job_id_JobTable_id_fk": {
+          "name": "ApplicationTable_job_id_JobTable_id_fk",
+          "tableFrom": "ApplicationTable",
+          "tableTo": "JobTable",
           "columnsFrom": [
             "job_id"
           ],
@@ -69,10 +69,10 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "applications_freelancer_id_users_id_fk": {
-          "name": "applications_freelancer_id_users_id_fk",
-          "tableFrom": "applications",
-          "tableTo": "users",
+        "ApplicationTable_freelancer_id_UserTable_id_fk": {
+          "name": "ApplicationTable_freelancer_id_UserTable_id_fk",
+          "tableFrom": "ApplicationTable",
+          "tableTo": "UserTable",
           "columnsFrom": [
             "freelancer_id"
           ],
@@ -86,8 +86,8 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "public.audit_logs": {
-      "name": "audit_logs",
+    "public.AuditLogTable": {
+      "name": "AuditLogTable",
       "schema": "",
       "columns": {
         "id": {
@@ -131,10 +131,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "audit_logs_user_id_users_id_fk": {
-          "name": "audit_logs_user_id_users_id_fk",
-          "tableFrom": "audit_logs",
-          "tableTo": "users",
+        "AuditLogTable_user_id_UserTable_id_fk": {
+          "name": "AuditLogTable_user_id_UserTable_id_fk",
+          "tableFrom": "AuditLogTable",
+          "tableTo": "UserTable",
           "columnsFrom": [
             "user_id"
           ],
@@ -148,8 +148,8 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "public.educations": {
-      "name": "educations",
+    "public.EducationTable": {
+      "name": "EducationTable",
       "schema": "",
       "columns": {
         "id": {
@@ -192,10 +192,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "educations_freelancer_id_freelancer_profiles_user_id_fk": {
-          "name": "educations_freelancer_id_freelancer_profiles_user_id_fk",
-          "tableFrom": "educations",
-          "tableTo": "freelancer_profiles",
+        "EducationTable_freelancer_id_FreelancerProfileTable_user_id_fk": {
+          "name": "EducationTable_freelancer_id_FreelancerProfileTable_user_id_fk",
+          "tableFrom": "EducationTable",
+          "tableTo": "FreelancerProfileTable",
           "columnsFrom": [
             "freelancer_id"
           ],
@@ -209,8 +209,8 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "public.event_registrations": {
-      "name": "event_registrations",
+    "public.EventRegistrationTable": {
+      "name": "EventRegistrationTable",
       "schema": "",
       "columns": {
         "id": {
@@ -248,10 +248,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "event_registrations_event_id_events_id_fk": {
-          "name": "event_registrations_event_id_events_id_fk",
-          "tableFrom": "event_registrations",
-          "tableTo": "events",
+        "EventRegistrationTable_event_id_EventTable_id_fk": {
+          "name": "EventRegistrationTable_event_id_EventTable_id_fk",
+          "tableFrom": "EventRegistrationTable",
+          "tableTo": "EventTable",
           "columnsFrom": [
             "event_id"
           ],
@@ -265,8 +265,8 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "public.events": {
-      "name": "events",
+    "public.EventTable": {
+      "name": "EventTable",
       "schema": "",
       "columns": {
         "id": {
@@ -351,8 +351,8 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "public.experiences": {
-      "name": "experiences",
+    "public.ExperienceTable": {
+      "name": "ExperienceTable",
       "schema": "",
       "columns": {
         "id": {
@@ -401,10 +401,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "experiences_freelancer_id_freelancer_profiles_user_id_fk": {
-          "name": "experiences_freelancer_id_freelancer_profiles_user_id_fk",
-          "tableFrom": "experiences",
-          "tableTo": "freelancer_profiles",
+        "ExperienceTable_freelancer_id_FreelancerProfileTable_user_id_fk": {
+          "name": "ExperienceTable_freelancer_id_FreelancerProfileTable_user_id_fk",
+          "tableFrom": "ExperienceTable",
+          "tableTo": "FreelancerProfileTable",
           "columnsFrom": [
             "freelancer_id"
           ],
@@ -418,8 +418,8 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "public.freelancer_profiles": {
-      "name": "freelancer_profiles",
+    "public.FreelancerProfileTable": {
+      "name": "FreelancerProfileTable",
       "schema": "",
       "columns": {
         "user_id": {
@@ -483,10 +483,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "freelancer_profiles_user_id_users_id_fk": {
-          "name": "freelancer_profiles_user_id_users_id_fk",
-          "tableFrom": "freelancer_profiles",
-          "tableTo": "users",
+        "FreelancerProfileTable_user_id_UserTable_id_fk": {
+          "name": "FreelancerProfileTable_user_id_UserTable_id_fk",
+          "tableFrom": "FreelancerProfileTable",
+          "tableTo": "UserTable",
           "columnsFrom": [
             "user_id"
           ],
@@ -500,8 +500,8 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "public.freelancer_skills": {
-      "name": "freelancer_skills",
+    "public.FreelancerSkillTable": {
+      "name": "FreelancerSkillTable",
       "schema": "",
       "columns": {
         "freelancer_id": {
@@ -519,10 +519,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "freelancer_skills_freelancer_id_freelancer_profiles_user_id_fk": {
-          "name": "freelancer_skills_freelancer_id_freelancer_profiles_user_id_fk",
-          "tableFrom": "freelancer_skills",
-          "tableTo": "freelancer_profiles",
+        "FreelancerSkillTable_freelancer_id_FreelancerProfileTable_user_id_fk": {
+          "name": "FreelancerSkillTable_freelancer_id_FreelancerProfileTable_user_id_fk",
+          "tableFrom": "FreelancerSkillTable",
+          "tableTo": "FreelancerProfileTable",
           "columnsFrom": [
             "freelancer_id"
           ],
@@ -532,10 +532,10 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "freelancer_skills_skill_id_skills_id_fk": {
-          "name": "freelancer_skills_skill_id_skills_id_fk",
-          "tableFrom": "freelancer_skills",
-          "tableTo": "skills",
+        "FreelancerSkillTable_skill_id_SkillTable_id_fk": {
+          "name": "FreelancerSkillTable_skill_id_SkillTable_id_fk",
+          "tableFrom": "FreelancerSkillTable",
+          "tableTo": "SkillTable",
           "columnsFrom": [
             "skill_id"
           ],
@@ -547,8 +547,8 @@
         }
       },
       "compositePrimaryKeys": {
-        "freelancer_skills_freelancer_id_skill_id_pk": {
-          "name": "freelancer_skills_freelancer_id_skill_id_pk",
+        "FreelancerSkillTable_freelancer_id_skill_id_pk": {
+          "name": "FreelancerSkillTable_freelancer_id_skill_id_pk",
           "columns": [
             "freelancer_id",
             "skill_id"
@@ -557,8 +557,8 @@
       },
       "uniqueConstraints": {}
     },
-    "public.jobs": {
-      "name": "jobs",
+    "public.JobTable": {
+      "name": "JobTable",
       "schema": "",
       "columns": {
         "id": {
@@ -641,10 +641,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "jobs_created_by_users_id_fk": {
-          "name": "jobs_created_by_users_id_fk",
-          "tableFrom": "jobs",
-          "tableTo": "users",
+        "JobTable_created_by_UserTable_id_fk": {
+          "name": "JobTable_created_by_UserTable_id_fk",
+          "tableFrom": "JobTable",
+          "tableTo": "UserTable",
           "columnsFrom": [
             "created_by"
           ],
@@ -654,10 +654,10 @@
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
-        "jobs_freelancer_id_users_id_fk": {
-          "name": "jobs_freelancer_id_users_id_fk",
-          "tableFrom": "jobs",
-          "tableTo": "users",
+        "JobTable_freelancer_id_UserTable_id_fk": {
+          "name": "JobTable_freelancer_id_UserTable_id_fk",
+          "tableFrom": "JobTable",
+          "tableTo": "UserTable",
           "columnsFrom": [
             "freelancer_id"
           ],
@@ -671,8 +671,8 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "public.messages": {
-      "name": "messages",
+    "public.MessageTable": {
+      "name": "MessageTable",
       "schema": "",
       "columns": {
         "id": {
@@ -723,10 +723,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "messages_sender_id_users_id_fk": {
-          "name": "messages_sender_id_users_id_fk",
-          "tableFrom": "messages",
-          "tableTo": "users",
+        "MessageTable_sender_id_UserTable_id_fk": {
+          "name": "MessageTable_sender_id_UserTable_id_fk",
+          "tableFrom": "MessageTable",
+          "tableTo": "UserTable",
           "columnsFrom": [
             "sender_id"
           ],
@@ -736,10 +736,10 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "messages_receiver_id_users_id_fk": {
-          "name": "messages_receiver_id_users_id_fk",
-          "tableFrom": "messages",
-          "tableTo": "users",
+        "MessageTable_receiver_id_UserTable_id_fk": {
+          "name": "MessageTable_receiver_id_UserTable_id_fk",
+          "tableFrom": "MessageTable",
+          "tableTo": "UserTable",
           "columnsFrom": [
             "receiver_id"
           ],
@@ -753,8 +753,8 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "public.notifications": {
-      "name": "notifications",
+    "public.NotificationTable": {
+      "name": "NotificationTable",
       "schema": "",
       "columns": {
         "id": {
@@ -805,10 +805,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "notifications_user_id_users_id_fk": {
-          "name": "notifications_user_id_users_id_fk",
-          "tableFrom": "notifications",
-          "tableTo": "users",
+        "NotificationTable_user_id_UserTable_id_fk": {
+          "name": "NotificationTable_user_id_UserTable_id_fk",
+          "tableFrom": "NotificationTable",
+          "tableTo": "UserTable",
           "columnsFrom": [
             "user_id"
           ],
@@ -822,8 +822,57 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "public.payments": {
-      "name": "payments",
+    "public.OtpTable": {
+      "name": "OtpTable",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "phone": {
+          "name": "phone",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "code_hash": {
+          "name": "code_hash",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "attempts": {
+          "name": "attempts",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.PaymentTable": {
+      "name": "PaymentTable",
       "schema": "",
       "columns": {
         "id": {
@@ -875,10 +924,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "payments_user_id_users_id_fk": {
-          "name": "payments_user_id_users_id_fk",
-          "tableFrom": "payments",
-          "tableTo": "users",
+        "PaymentTable_user_id_UserTable_id_fk": {
+          "name": "PaymentTable_user_id_UserTable_id_fk",
+          "tableFrom": "PaymentTable",
+          "tableTo": "UserTable",
           "columnsFrom": [
             "user_id"
           ],
@@ -891,8 +940,8 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "payments_transaction_id_unique": {
-          "name": "payments_transaction_id_unique",
+        "PaymentTable_transaction_id_unique": {
+          "name": "PaymentTable_transaction_id_unique",
           "nullsNotDistinct": false,
           "columns": [
             "transaction_id"
@@ -900,8 +949,8 @@
         }
       }
     },
-    "public.portfolios": {
-      "name": "portfolios",
+    "public.PortfolioTable": {
+      "name": "PortfolioTable",
       "schema": "",
       "columns": {
         "id": {
@@ -945,10 +994,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "portfolios_freelancer_id_freelancer_profiles_user_id_fk": {
-          "name": "portfolios_freelancer_id_freelancer_profiles_user_id_fk",
-          "tableFrom": "portfolios",
-          "tableTo": "freelancer_profiles",
+        "PortfolioTable_freelancer_id_FreelancerProfileTable_user_id_fk": {
+          "name": "PortfolioTable_freelancer_id_FreelancerProfileTable_user_id_fk",
+          "tableFrom": "PortfolioTable",
+          "tableTo": "FreelancerProfileTable",
           "columnsFrom": [
             "freelancer_id"
           ],
@@ -962,8 +1011,8 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "public.refresh_tokens": {
-      "name": "refresh_tokens",
+    "public.RefreshTokenTable": {
+      "name": "RefreshTokenTable",
       "schema": "",
       "columns": {
         "id": {
@@ -1008,10 +1057,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "refresh_tokens_user_id_users_id_fk": {
-          "name": "refresh_tokens_user_id_users_id_fk",
-          "tableFrom": "refresh_tokens",
-          "tableTo": "users",
+        "RefreshTokenTable_user_id_UserTable_id_fk": {
+          "name": "RefreshTokenTable_user_id_UserTable_id_fk",
+          "tableFrom": "RefreshTokenTable",
+          "tableTo": "UserTable",
           "columnsFrom": [
             "user_id"
           ],
@@ -1024,8 +1073,8 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "refresh_tokens_token_unique": {
-          "name": "refresh_tokens_token_unique",
+        "RefreshTokenTable_token_unique": {
+          "name": "RefreshTokenTable_token_unique",
           "nullsNotDistinct": false,
           "columns": [
             "token"
@@ -1033,8 +1082,8 @@
         }
       }
     },
-    "public.resources": {
-      "name": "resources",
+    "public.ResourceTable": {
+      "name": "ResourceTable",
       "schema": "",
       "columns": {
         "id": {
@@ -1100,8 +1149,8 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "public.reviews": {
-      "name": "reviews",
+    "public.ReviewTable": {
+      "name": "ReviewTable",
       "schema": "",
       "columns": {
         "id": {
@@ -1145,10 +1194,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "reviews_reviewer_id_users_id_fk": {
-          "name": "reviews_reviewer_id_users_id_fk",
-          "tableFrom": "reviews",
-          "tableTo": "users",
+        "ReviewTable_reviewer_id_UserTable_id_fk": {
+          "name": "ReviewTable_reviewer_id_UserTable_id_fk",
+          "tableFrom": "ReviewTable",
+          "tableTo": "UserTable",
           "columnsFrom": [
             "reviewer_id"
           ],
@@ -1158,10 +1207,10 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "reviews_freelancer_id_users_id_fk": {
-          "name": "reviews_freelancer_id_users_id_fk",
-          "tableFrom": "reviews",
-          "tableTo": "users",
+        "ReviewTable_freelancer_id_UserTable_id_fk": {
+          "name": "ReviewTable_freelancer_id_UserTable_id_fk",
+          "tableFrom": "ReviewTable",
+          "tableTo": "UserTable",
           "columnsFrom": [
             "freelancer_id"
           ],
@@ -1175,8 +1224,8 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "public.skills": {
-      "name": "skills",
+    "public.SkillTable": {
+      "name": "SkillTable",
       "schema": "",
       "columns": {
         "id": {
@@ -1197,8 +1246,8 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "skills_name_unique": {
-          "name": "skills_name_unique",
+        "SkillTable_name_unique": {
+          "name": "SkillTable_name_unique",
           "nullsNotDistinct": false,
           "columns": [
             "name"
@@ -1206,8 +1255,8 @@
         }
       }
     },
-    "public.users": {
-      "name": "users",
+    "public.UserTable": {
+      "name": "UserTable",
       "schema": "",
       "columns": {
         "id": {
@@ -1227,13 +1276,13 @@
           "name": "email",
           "type": "varchar(255)",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "password_hash": {
           "name": "password_hash",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "role": {
           "name": "role",
@@ -1309,11 +1358,18 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "users_email_unique": {
-          "name": "users_email_unique",
+        "UserTable_email_unique": {
+          "name": "UserTable_email_unique",
           "nullsNotDistinct": false,
           "columns": [
             "email"
+          ]
+        },
+        "UserTable_phone_unique": {
+          "name": "UserTable_phone_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "phone"
           ]
         }
       }

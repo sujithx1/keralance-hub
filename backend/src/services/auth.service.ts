@@ -1,6 +1,6 @@
 import { eq, and } from "drizzle-orm";
 import { db } from "../db/connection";
-import { refreshTokens, users } from "../schema/db.schema";
+import { RefreshTokenTable, UserTable } from "../schema/db.schema";
 import { userRepository } from "../repositories/user.repository";
 import {
   generateAccessToken,
@@ -16,7 +16,6 @@ export class AuthService {
       throw new Error("Email is already registered");
     }
 
-    // Hash password using Bun's native secure password hasher (uses Argon2)
     const passwordHash = await Bun.password.hash(passwordPlain, {
       algorithm: "argon2id",
     });
@@ -48,26 +47,23 @@ export class AuthService {
       throw new Error("Your account has been banned. Contact administrator.");
     }
 
-    // Verify password natively
-    const isValid = await Bun.password.verify(passwordPlain, user.passwordHash);
+    const isValid = await Bun.password.verify(passwordPlain, user.passwordHash || "");
     if (!isValid) {
       throw new Error("Invalid email or password");
     }
 
     const payload: JWTPayload = {
       id: user.id,
-      email: user.email,
       role: user.role as any,
     };
 
     const accessToken = await generateAccessToken(payload);
     const refreshToken = await generateRefreshToken(payload);
 
-    // Save refresh token to db
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7); // 7 days
 
-    await db.insert(refreshTokens).values({
+    await db.insert(RefreshTokenTable).values({
       userId: user.id,
       token: refreshToken,
       expiresAt,
@@ -87,8 +83,7 @@ export class AuthService {
   }
 
   async logout(token: string): Promise<void> {
-    // Revoke refresh token
-    await db.update(refreshTokens).set({ isRevoked: true }).where(eq(refreshTokens.token, token));
+    await db.update(RefreshTokenTable).set({ isRevoked: true }).where(eq(RefreshTokenTable.token, token));
   }
 
   async refresh(token: string) {
@@ -97,50 +92,44 @@ export class AuthService {
       throw new Error("Invalid refresh token");
     }
 
-    // Find token record in database
     const [tokenRecord] = await db
       .select()
-      .from(refreshTokens)
+      .from(RefreshTokenTable)
       .where(
         and(
-          eq(refreshTokens.token, token),
-          eq(refreshTokens.isRevoked, false)
+          eq(RefreshTokenTable.token, token),
+          eq(RefreshTokenTable.isRevoked, false)
         )
       )
       .limit(1);
 
     if (!tokenRecord || new Date() > tokenRecord.expiresAt) {
-      // If token is revoked or expired, revoke all tokens for this user for security (reuse detection)
       if (tokenRecord) {
         await db
-          .update(refreshTokens)
+          .update(RefreshTokenTable)
           .set({ isRevoked: true })
-          .where(eq(refreshTokens.userId, tokenRecord.userId));
+          .where(eq(RefreshTokenTable.userId, tokenRecord.userId));
       }
       throw new Error("Refresh token expired or revoked");
     }
 
-    // Revoke old token (token rotation)
     await db
-      .update(refreshTokens)
+      .update(RefreshTokenTable)
       .set({ isRevoked: true })
-      .where(eq(refreshTokens.id, tokenRecord.id));
+      .where(eq(RefreshTokenTable.id, tokenRecord.id));
 
-    // Generate new tokens
     const userPayload: JWTPayload = {
       id: payload.id,
-      email: payload.email,
       role: payload.role,
     };
 
     const newAccessToken = await generateAccessToken(userPayload);
     const newRefreshToken = await generateRefreshToken(userPayload);
 
-    // Save new refresh token
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
 
-    await db.insert(refreshTokens).values({
+    await db.insert(RefreshTokenTable).values({
       userId: payload.id,
       token: newRefreshToken,
       expiresAt,

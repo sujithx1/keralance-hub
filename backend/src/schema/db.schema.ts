@@ -10,11 +10,11 @@ import {
   primaryKey,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
-import { relations, sql } from "drizzle-orm";
+import { relations } from "drizzle-orm";
 
-// 1. Users Table
-export const users = pgTable(
-  "users",
+// 1. User Table
+export const UserTable = pgTable(
+  "UserTable",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     name: varchar("name", { length: 255 }).notNull(),
@@ -35,7 +35,7 @@ export const users = pgTable(
 );
 
 // 1.1 OTP Verification Table
-export const otps = pgTable("otps", {
+export const OtpTable = pgTable("OtpTable", {
   id: uuid("id").primaryKey().defaultRandom(),
   phone: varchar("phone", { length: 20 }).notNull(),
   codeHash: varchar("code_hash", { length: 255 }).notNull(),
@@ -45,11 +45,11 @@ export const otps = pgTable("otps", {
 });
 
 // 2. Refresh Tokens Table
-export const refreshTokens = pgTable("refresh_tokens", {
+export const RefreshTokenTable = pgTable("RefreshTokenTable", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id")
     .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
+    .references(() => UserTable.id, { onDelete: "cascade" }),
   token: text("token").notNull().unique(),
   expiresAt: timestamp("expires_at").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -57,10 +57,10 @@ export const refreshTokens = pgTable("refresh_tokens", {
 });
 
 // 3. Freelancer Profile Table
-export const freelancerProfiles = pgTable("freelancer_profiles", {
+export const FreelancerProfileTable = pgTable("FreelancerProfileTable", {
   userId: uuid("user_id")
     .primaryKey()
-    .references(() => users.id, { onDelete: "cascade" }),
+    .references(() => UserTable.id, { onDelete: "cascade" }),
   title: varchar("title", { length: 255 }).notNull(),
   bio: text("bio").notNull(),
   hourlyRate: decimal("hourly_rate", { precision: 10, scale: 2 }).notNull().default("0.00"),
@@ -72,21 +72,21 @@ export const freelancerProfiles = pgTable("freelancer_profiles", {
 });
 
 // 4. Skills Table
-export const skills = pgTable("skills", {
+export const SkillTable = pgTable("SkillTable", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: varchar("name", { length: 255 }).notNull().unique(),
 });
 
 // 5. Freelancer Skills Table (Many-to-Many Bridge)
-export const freelancerSkills = pgTable(
-  "freelancer_skills",
+export const FreelancerSkillTable = pgTable(
+  "FreelancerSkillTable",
   {
     freelancerId: uuid("freelancer_id")
       .notNull()
-      .references(() => freelancerProfiles.userId, { onDelete: "cascade" }),
+      .references(() => FreelancerProfileTable.userId, { onDelete: "cascade" }),
     skillId: uuid("skill_id")
       .notNull()
-      .references(() => skills.id, { onDelete: "cascade" }),
+      .references(() => SkillTable.id, { onDelete: "cascade" }),
   },
   (table) => ({
     pk: primaryKey({ columns: [table.freelancerId, table.skillId] }),
@@ -94,11 +94,11 @@ export const freelancerSkills = pgTable(
 );
 
 // 6. Portfolio Table
-export const portfolios = pgTable("portfolios", {
+export const PortfolioTable = pgTable("PortfolioTable", {
   id: uuid("id").primaryKey().defaultRandom(),
   freelancerId: uuid("freelancer_id")
     .notNull()
-    .references(() => freelancerProfiles.userId, { onDelete: "cascade" }),
+    .references(() => FreelancerProfileTable.userId, { onDelete: "cascade" }),
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description").notNull(),
   projectUrl: varchar("project_url", { length: 500 }),
@@ -106,11 +106,11 @@ export const portfolios = pgTable("portfolios", {
 });
 
 // 7. Experience Table
-export const experiences = pgTable("experiences", {
+export const ExperienceTable = pgTable("ExperienceTable", {
   id: uuid("id").primaryKey().defaultRandom(),
   freelancerId: uuid("freelancer_id")
     .notNull()
-    .references(() => freelancerProfiles.userId, { onDelete: "cascade" }),
+    .references(() => FreelancerProfileTable.userId, { onDelete: "cascade" }),
   company: varchar("company", { length: 255 }).notNull(),
   position: varchar("position", { length: 255 }).notNull(),
   startDate: timestamp("start_date").notNull(),
@@ -119,11 +119,11 @@ export const experiences = pgTable("experiences", {
 });
 
 // 8. Education Table
-export const educations = pgTable("educations", {
+export const EducationTable = pgTable("EducationTable", {
   id: uuid("id").primaryKey().defaultRandom(),
   freelancerId: uuid("freelancer_id")
     .notNull()
-    .references(() => freelancerProfiles.userId, { onDelete: "cascade" }),
+    .references(() => FreelancerProfileTable.userId, { onDelete: "cascade" }),
   institution: varchar("institution", { length: 255 }).notNull(),
   degree: varchar("degree", { length: 255 }).notNull(),
   startDate: timestamp("start_date").notNull(),
@@ -131,7 +131,7 @@ export const educations = pgTable("educations", {
 });
 
 // 9. Jobs Table
-export const jobs = pgTable("jobs", {
+export const JobTable = pgTable("JobTable", {
   id: uuid("id").primaryKey().defaultRandom(),
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description").notNull(),
@@ -140,8 +140,8 @@ export const jobs = pgTable("jobs", {
   status: varchar("status", { length: 50 }).notNull().default("open"), // 'open', 'in_progress', 'completed', 'cancelled'
   createdBy: uuid("created_by")
     .notNull()
-    .references(() => users.id, { onDelete: "restrict" }),
-  freelancerId: uuid("freelancer_id").references(() => users.id, { onDelete: "set null" }),
+    .references(() => UserTable.id, { onDelete: "restrict" }),
+  freelancerId: uuid("freelancer_id").references(() => UserTable.id, { onDelete: "set null" }),
   deadline: timestamp("deadline"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
@@ -149,14 +149,14 @@ export const jobs = pgTable("jobs", {
 });
 
 // 10. Applications Table
-export const applications = pgTable("applications", {
+export const ApplicationTable = pgTable("ApplicationTable", {
   id: uuid("id").primaryKey().defaultRandom(),
   jobId: uuid("job_id")
     .notNull()
-    .references(() => jobs.id, { onDelete: "cascade" }),
+    .references(() => JobTable.id, { onDelete: "cascade" }),
   freelancerId: uuid("freelancer_id")
     .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
+    .references(() => UserTable.id, { onDelete: "cascade" }),
   proposal: text("proposal").notNull(),
   amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
   status: varchar("status", { length: 50 }).notNull().default("pending"), // 'pending', 'accepted', 'rejected'
@@ -164,14 +164,14 @@ export const applications = pgTable("applications", {
 });
 
 // 11. Messages Table
-export const messages = pgTable("messages", {
+export const MessageTable = pgTable("MessageTable", {
   id: uuid("id").primaryKey().defaultRandom(),
   senderId: uuid("sender_id")
     .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
+    .references(() => UserTable.id, { onDelete: "cascade" }),
   receiverId: uuid("receiver_id")
     .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
+    .references(() => UserTable.id, { onDelete: "cascade" }),
   content: text("content").notNull(),
   attachments: text("attachments"), // JSON string array of URLs
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -179,25 +179,25 @@ export const messages = pgTable("messages", {
 });
 
 // 12. Reviews Table
-export const reviews = pgTable("reviews", {
+export const ReviewTable = pgTable("ReviewTable", {
   id: uuid("id").primaryKey().defaultRandom(),
   reviewerId: uuid("reviewer_id")
     .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
+    .references(() => UserTable.id, { onDelete: "cascade" }),
   freelancerId: uuid("freelancer_id")
     .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
+    .references(() => UserTable.id, { onDelete: "cascade" }),
   rating: integer("rating").notNull(),
   comment: text("comment").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 // 13. Notifications Table
-export const notifications = pgTable("notifications", {
+export const NotificationTable = pgTable("NotificationTable", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id")
     .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
+    .references(() => UserTable.id, { onDelete: "cascade" }),
   title: varchar("title", { length: 255 }).notNull(),
   message: text("message").notNull(),
   type: varchar("type", { length: 50 }).notNull(), // 'info', 'job_alert', 'message', 'payment'
@@ -206,11 +206,11 @@ export const notifications = pgTable("notifications", {
 });
 
 // 14. Payments Table
-export const payments = pgTable("payments", {
+export const PaymentTable = pgTable("PaymentTable", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id")
     .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
+    .references(() => UserTable.id, { onDelete: "cascade" }),
   amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
   currency: varchar("currency", { length: 10 }).notNull().default("INR"),
   status: varchar("status", { length: 50 }).notNull().default("pending"), // 'pending', 'completed', 'failed'
@@ -219,7 +219,7 @@ export const payments = pgTable("payments", {
 });
 
 // 15. Events Table
-export const events = pgTable("events", {
+export const EventTable = pgTable("EventTable", {
   id: uuid("id").primaryKey().defaultRandom(),
   type: varchar("type", { length: 50 }).notNull(), // 'workshop', 'meetup', 'hackathon', 'ama'
   title: varchar("title", { length: 255 }).notNull(),
@@ -235,18 +235,18 @@ export const events = pgTable("events", {
 });
 
 // 16. Event Registrations Table
-export const eventRegistrations = pgTable("event_registrations", {
+export const EventRegistrationTable = pgTable("EventRegistrationTable", {
   id: uuid("id").primaryKey().defaultRandom(),
   eventId: uuid("event_id")
     .notNull()
-    .references(() => events.id, { onDelete: "cascade" }),
+    .references(() => EventTable.id, { onDelete: "cascade" }),
   name: varchar("name", { length: 255 }).notNull(),
   email: varchar("email", { length: 255 }).notNull(),
   registeredAt: timestamp("registered_at").notNull().defaultNow(),
 });
 
 // 17. Resources Table
-export const resources = pgTable("resources", {
+export const ResourceTable = pgTable("ResourceTable", {
   id: uuid("id").primaryKey().defaultRandom(),
   title: varchar("title", { length: 255 }).notNull(),
   category: varchar("category", { length: 100 }).notNull(),
@@ -259,9 +259,9 @@ export const resources = pgTable("resources", {
 });
 
 // 18. Audit Logs Table
-export const auditLogs = pgTable("audit_logs", {
+export const AuditLogTable = pgTable("AuditLogTable", {
   id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+  userId: uuid("user_id").references(() => UserTable.id, { onDelete: "set null" }),
   action: varchar("action", { length: 255 }).notNull(),
   details: text("details").notNull(),
   ipAddress: varchar("ip_address", { length: 45 }),
@@ -269,153 +269,153 @@ export const auditLogs = pgTable("audit_logs", {
 });
 
 // Relationships Setup for Drizzle Query API
-export const usersRelations = relations(users, ({ one, many }) => ({
-  freelancerProfile: one(freelancerProfiles, {
-    fields: [users.id],
-    references: [freelancerProfiles.userId],
+export const usersRelations = relations(UserTable, ({ one, many }) => ({
+  freelancerProfile: one(FreelancerProfileTable, {
+    fields: [UserTable.id],
+    references: [FreelancerProfileTable.userId],
   }),
-  refreshTokens: many(refreshTokens),
-  jobsCreated: many(jobs, { relationName: "creatorRelation" }),
-  jobsAssigned: many(jobs, { relationName: "freelancerRelation" }),
-  applications: many(applications),
-  reviewsWritten: many(reviews, { relationName: "reviewerRelation" }),
-  reviewsReceived: many(reviews, { relationName: "freelancerReviewsRelation" }),
-  payments: many(payments),
-  notifications: many(notifications),
-  auditLogs: many(auditLogs),
+  refreshTokens: many(RefreshTokenTable),
+  jobsCreated: many(JobTable, { relationName: "creatorRelation" }),
+  jobsAssigned: many(JobTable, { relationName: "freelancerRelation" }),
+  applications: many(ApplicationTable),
+  reviewsWritten: many(ReviewTable, { relationName: "reviewerRelation" }),
+  reviewsReceived: many(ReviewTable, { relationName: "freelancerReviewsRelation" }),
+  payments: many(PaymentTable),
+  notifications: many(NotificationTable),
+  auditLogs: many(AuditLogTable),
 }));
 
-export const refreshTokensRelations = relations(refreshTokens, ({ one }) => ({
-  user: one(users, {
-    fields: [refreshTokens.userId],
-    references: [users.id],
-  }),
-}));
-
-export const freelancerProfilesRelations = relations(freelancerProfiles, ({ one, many }) => ({
-  user: one(users, {
-    fields: [freelancerProfiles.userId],
-    references: [users.id],
-  }),
-  skills: many(freelancerSkills),
-  portfolios: many(portfolios),
-  experiences: many(experiences),
-  educations: many(educations),
-}));
-
-export const skillsRelations = relations(skills, ({ many }) => ({
-  freelancers: many(freelancerSkills),
-}));
-
-export const freelancerSkillsRelations = relations(freelancerSkills, ({ one }) => ({
-  freelancer: one(freelancerProfiles, {
-    fields: [freelancerSkills.freelancerId],
-    references: [freelancerProfiles.userId],
-  }),
-  skill: one(skills, {
-    fields: [freelancerSkills.skillId],
-    references: [skills.id],
+export const refreshTokensRelations = relations(RefreshTokenTable, ({ one }) => ({
+  user: one(UserTable, {
+    fields: [RefreshTokenTable.userId],
+    references: [UserTable.id],
   }),
 }));
 
-export const portfoliosRelations = relations(portfolios, ({ one }) => ({
-  freelancer: one(freelancerProfiles, {
-    fields: [portfolios.freelancerId],
-    references: [freelancerProfiles.userId],
+export const freelancerProfilesRelations = relations(FreelancerProfileTable, ({ one, many }) => ({
+  user: one(UserTable, {
+    fields: [FreelancerProfileTable.userId],
+    references: [UserTable.id],
+  }),
+  skills: many(FreelancerSkillTable),
+  portfolios: many(PortfolioTable),
+  experiences: many(ExperienceTable),
+  educations: many(EducationTable),
+}));
+
+export const skillsRelations = relations(SkillTable, ({ many }) => ({
+  freelancers: many(FreelancerSkillTable),
+}));
+
+export const freelancerSkillsRelations = relations(FreelancerSkillTable, ({ one }) => ({
+  freelancer: one(FreelancerProfileTable, {
+    fields: [FreelancerSkillTable.freelancerId],
+    references: [FreelancerProfileTable.userId],
+  }),
+  skill: one(SkillTable, {
+    fields: [FreelancerSkillTable.skillId],
+    references: [SkillTable.id],
   }),
 }));
 
-export const experiencesRelations = relations(experiences, ({ one }) => ({
-  freelancer: one(freelancerProfiles, {
-    fields: [experiences.freelancerId],
-    references: [freelancerProfiles.userId],
+export const portfoliosRelations = relations(PortfolioTable, ({ one }) => ({
+  freelancer: one(FreelancerProfileTable, {
+    fields: [PortfolioTable.freelancerId],
+    references: [FreelancerProfileTable.userId],
   }),
 }));
 
-export const educationsRelations = relations(educations, ({ one }) => ({
-  freelancer: one(freelancerProfiles, {
-    fields: [educations.freelancerId],
-    references: [freelancerProfiles.userId],
+export const experiencesRelations = relations(ExperienceTable, ({ one }) => ({
+  freelancer: one(FreelancerProfileTable, {
+    fields: [ExperienceTable.freelancerId],
+    references: [FreelancerProfileTable.userId],
   }),
 }));
 
-export const jobsRelations = relations(jobs, ({ one, many }) => ({
-  creator: one(users, {
-    fields: [jobs.createdBy],
-    references: [users.id],
+export const educationsRelations = relations(EducationTable, ({ one }) => ({
+  freelancer: one(FreelancerProfileTable, {
+    fields: [EducationTable.freelancerId],
+    references: [FreelancerProfileTable.userId],
+  }),
+}));
+
+export const jobsRelations = relations(JobTable, ({ one, many }) => ({
+  creator: one(UserTable, {
+    fields: [JobTable.createdBy],
+    references: [UserTable.id],
     relationName: "creatorRelation",
   }),
-  freelancer: one(users, {
-    fields: [jobs.freelancerId],
-    references: [users.id],
+  freelancer: one(UserTable, {
+    fields: [JobTable.freelancerId],
+    references: [UserTable.id],
     relationName: "freelancerRelation",
   }),
-  applications: many(applications),
+  applications: many(ApplicationTable),
 }));
 
-export const applicationsRelations = relations(applications, ({ one }) => ({
-  job: one(jobs, {
-    fields: [applications.jobId],
-    references: [jobs.id],
+export const applicationsRelations = relations(ApplicationTable, ({ one }) => ({
+  job: one(JobTable, {
+    fields: [ApplicationTable.jobId],
+    references: [JobTable.id],
   }),
-  freelancer: one(users, {
-    fields: [applications.freelancerId],
-    references: [users.id],
-  }),
-}));
-
-export const messagesRelations = relations(messages, ({ one }) => ({
-  sender: one(users, {
-    fields: [messages.senderId],
-    references: [users.id],
-  }),
-  receiver: one(users, {
-    fields: [messages.receiverId],
-    references: [users.id],
+  freelancer: one(UserTable, {
+    fields: [ApplicationTable.freelancerId],
+    references: [UserTable.id],
   }),
 }));
 
-export const reviewsRelations = relations(reviews, ({ one }) => ({
-  reviewer: one(users, {
-    fields: [reviews.reviewerId],
-    references: [users.id],
+export const messagesRelations = relations(MessageTable, ({ one }) => ({
+  sender: one(UserTable, {
+    fields: [MessageTable.senderId],
+    references: [UserTable.id],
+  }),
+  receiver: one(UserTable, {
+    fields: [MessageTable.receiverId],
+    references: [UserTable.id],
+  }),
+}));
+
+export const reviewsRelations = relations(ReviewTable, ({ one }) => ({
+  reviewer: one(UserTable, {
+    fields: [ReviewTable.reviewerId],
+    references: [UserTable.id],
     relationName: "reviewerRelation",
   }),
-  freelancer: one(users, {
-    fields: [reviews.freelancerId],
-    references: [users.id],
+  freelancer: one(UserTable, {
+    fields: [ReviewTable.freelancerId],
+    references: [UserTable.id],
     relationName: "freelancerReviewsRelation",
   }),
 }));
 
-export const notificationsRelations = relations(notifications, ({ one }) => ({
-  user: one(users, {
-    fields: [notifications.userId],
-    references: [users.id],
+export const notificationsRelations = relations(NotificationTable, ({ one }) => ({
+  user: one(UserTable, {
+    fields: [NotificationTable.userId],
+    references: [UserTable.id],
   }),
 }));
 
-export const paymentsRelations = relations(payments, ({ one }) => ({
-  user: one(users, {
-    fields: [payments.userId],
-    references: [users.id],
+export const paymentsRelations = relations(PaymentTable, ({ one }) => ({
+  user: one(UserTable, {
+    fields: [PaymentTable.userId],
+    references: [UserTable.id],
   }),
 }));
 
-export const eventsRelations = relations(events, ({ many }) => ({
-  registrations: many(eventRegistrations),
+export const eventsRelations = relations(EventTable, ({ many }) => ({
+  registrations: many(EventRegistrationTable),
 }));
 
-export const eventRegistrationsRelations = relations(eventRegistrations, ({ one }) => ({
-  event: one(events, {
-    fields: [eventRegistrations.eventId],
-    references: [events.id],
+export const eventRegistrationsRelations = relations(EventRegistrationTable, ({ one }) => ({
+  event: one(EventTable, {
+    fields: [EventRegistrationTable.eventId],
+    references: [EventTable.id],
   }),
 }));
 
-export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
-  user: one(users, {
-    fields: [auditLogs.userId],
-    references: [users.id],
+export const auditLogsRelations = relations(AuditLogTable, ({ one }) => ({
+  user: one(UserTable, {
+    fields: [AuditLogTable.userId],
+    references: [UserTable.id],
   }),
 }));

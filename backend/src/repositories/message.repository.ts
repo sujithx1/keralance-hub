@@ -1,61 +1,58 @@
 import { eq, and, or, desc, asc } from "drizzle-orm";
 import { db } from "../db/connection";
-import { messages, users } from "../schema/db.schema";
+import { MessageTable, UserTable } from "../schema/db.schema";
 
-export type MessageInsert = typeof messages.$inferInsert;
-export type MessageSelect = typeof messages.$inferSelect;
+export type MessageInsert = typeof MessageTable.$inferInsert;
+export type MessageSelect = typeof MessageTable.$inferSelect;
 
 export class MessageRepository {
   async getChatHistory(userId1: string, userId2: string) {
     return await db
       .select({
-        id: messages.id,
-        senderId: messages.senderId,
-        receiverId: messages.receiverId,
-        content: messages.content,
-        attachments: messages.attachments,
-        createdAt: messages.createdAt,
-        read: messages.read,
+        id: MessageTable.id,
+        senderId: MessageTable.senderId,
+        receiverId: MessageTable.receiverId,
+        content: MessageTable.content,
+        attachments: MessageTable.attachments,
+        createdAt: MessageTable.createdAt,
+        read: MessageTable.read,
       })
-      .from(messages)
+      .from(MessageTable)
       .where(
         or(
-          and(eq(messages.senderId, userId1), eq(messages.receiverId, userId2)),
-          and(eq(messages.senderId, userId2), eq(messages.receiverId, userId1))
+          and(eq(MessageTable.senderId, userId1), eq(MessageTable.receiverId, userId2)),
+          and(eq(MessageTable.senderId, userId2), eq(MessageTable.receiverId, userId1))
         )
       )
-      .orderBy(asc(messages.createdAt));
+      .orderBy(asc(MessageTable.createdAt));
   }
 
   async send(data: MessageInsert): Promise<MessageSelect> {
-    const results = await db.insert(messages).values(data).returning();
+    const results = await db.insert(MessageTable).values(data).returning();
     return results[0];
   }
 
   async markAsRead(receiverId: string, senderId: string): Promise<void> {
     await db
-      .update(messages)
+      .update(MessageTable)
       .set({ read: true })
-      .where(and(eq(messages.receiverId, receiverId), eq(messages.senderId, senderId), eq(messages.read, false)));
+      .where(and(eq(MessageTable.receiverId, receiverId), eq(MessageTable.senderId, senderId), eq(MessageTable.read, false)));
   }
 
   async getConversations(userId: string) {
-    // In a real system, you'd use a raw SQL query or subquery to aggregate last message per user.
-    // Drizzle can execute standard helper joins.
     const allMsgs = await db
       .select({
-        id: messages.id,
-        senderId: messages.senderId,
-        receiverId: messages.receiverId,
-        content: messages.content,
-        createdAt: messages.createdAt,
-        read: messages.read,
+        id: MessageTable.id,
+        senderId: MessageTable.senderId,
+        receiverId: MessageTable.receiverId,
+        content: MessageTable.content,
+        createdAt: MessageTable.createdAt,
+        read: MessageTable.read,
       })
-      .from(messages)
-      .where(or(eq(messages.senderId, userId), eq(messages.receiverId, userId)))
-      .orderBy(desc(messages.createdAt));
+      .from(MessageTable)
+      .where(or(eq(MessageTable.senderId, userId), eq(MessageTable.receiverId, userId)))
+      .orderBy(desc(MessageTable.createdAt));
 
-    // Aggregate manually in-memory for simpler, robust retrieval
     const seen = new Set<string>();
     const conversations = [];
 
@@ -65,9 +62,9 @@ export class MessageRepository {
       seen.add(otherUserId);
 
       const [otherUser] = await db
-        .select({ name: users.name, avatarUrl: users.avatarUrl })
-        .from(users)
-        .where(eq(users.id, otherUserId))
+        .select({ name: UserTable.name, avatarUrl: UserTable.avatarUrl })
+        .from(UserTable)
+        .where(eq(UserTable.id, otherUserId))
         .limit(1);
 
       conversations.push({

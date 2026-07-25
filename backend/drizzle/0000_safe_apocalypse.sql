@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS "applications" (
+CREATE TABLE IF NOT EXISTS "ApplicationTable" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"job_id" uuid NOT NULL,
 	"freelancer_id" uuid NOT NULL,
@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS "applications" (
 	"created_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "audit_logs" (
+CREATE TABLE IF NOT EXISTS "AuditLogTable" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"user_id" uuid,
 	"action" varchar(255) NOT NULL,
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS "audit_logs" (
 	"created_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "educations" (
+CREATE TABLE IF NOT EXISTS "EducationTable" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"freelancer_id" uuid NOT NULL,
 	"institution" varchar(255) NOT NULL,
@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS "educations" (
 	"end_date" timestamp
 );
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "event_registrations" (
+CREATE TABLE IF NOT EXISTS "EventRegistrationTable" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"event_id" uuid NOT NULL,
 	"name" varchar(255) NOT NULL,
@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS "event_registrations" (
 	"registered_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "events" (
+CREATE TABLE IF NOT EXISTS "EventTable" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"type" varchar(50) NOT NULL,
 	"title" varchar(255) NOT NULL,
@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS "events" (
 	"created_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "experiences" (
+CREATE TABLE IF NOT EXISTS "ExperienceTable" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"freelancer_id" uuid NOT NULL,
 	"company" varchar(255) NOT NULL,
@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS "experiences" (
 	"description" text
 );
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "freelancer_profiles" (
+CREATE TABLE IF NOT EXISTS "FreelancerProfileTable" (
 	"user_id" uuid PRIMARY KEY NOT NULL,
 	"title" varchar(255) NOT NULL,
 	"bio" text NOT NULL,
@@ -71,13 +71,13 @@ CREATE TABLE IF NOT EXISTS "freelancer_profiles" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "freelancer_skills" (
+CREATE TABLE IF NOT EXISTS "FreelancerSkillTable" (
 	"freelancer_id" uuid NOT NULL,
 	"skill_id" uuid NOT NULL,
-	CONSTRAINT "freelancer_skills_freelancer_id_skill_id_pk" PRIMARY KEY("freelancer_id","skill_id")
+	CONSTRAINT "FreelancerSkillTable_freelancer_id_skill_id_pk" PRIMARY KEY("freelancer_id","skill_id")
 );
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "jobs" (
+CREATE TABLE IF NOT EXISTS "JobTable" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"title" varchar(255) NOT NULL,
 	"description" text NOT NULL,
@@ -92,7 +92,7 @@ CREATE TABLE IF NOT EXISTS "jobs" (
 	"deleted_at" timestamp
 );
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "messages" (
+CREATE TABLE IF NOT EXISTS "MessageTable" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"sender_id" uuid NOT NULL,
 	"receiver_id" uuid NOT NULL,
@@ -102,7 +102,7 @@ CREATE TABLE IF NOT EXISTS "messages" (
 	"read" boolean DEFAULT false NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "notifications" (
+CREATE TABLE IF NOT EXISTS "NotificationTable" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"user_id" uuid NOT NULL,
 	"title" varchar(255) NOT NULL,
@@ -112,7 +112,16 @@ CREATE TABLE IF NOT EXISTS "notifications" (
 	"created_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "payments" (
+CREATE TABLE IF NOT EXISTS "OtpTable" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"phone" varchar(20) NOT NULL,
+	"code_hash" varchar(255) NOT NULL,
+	"expires_at" timestamp NOT NULL,
+	"attempts" integer DEFAULT 0 NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS "PaymentTable" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"user_id" uuid NOT NULL,
 	"amount" numeric(12, 2) NOT NULL,
@@ -120,10 +129,10 @@ CREATE TABLE IF NOT EXISTS "payments" (
 	"status" varchar(50) DEFAULT 'pending' NOT NULL,
 	"transaction_id" varchar(255) NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
-	CONSTRAINT "payments_transaction_id_unique" UNIQUE("transaction_id")
+	CONSTRAINT "PaymentTable_transaction_id_unique" UNIQUE("transaction_id")
 );
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "portfolios" (
+CREATE TABLE IF NOT EXISTS "PortfolioTable" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"freelancer_id" uuid NOT NULL,
 	"title" varchar(255) NOT NULL,
@@ -132,17 +141,17 @@ CREATE TABLE IF NOT EXISTS "portfolios" (
 	"created_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "refresh_tokens" (
+CREATE TABLE IF NOT EXISTS "RefreshTokenTable" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"user_id" uuid NOT NULL,
 	"token" text NOT NULL,
 	"expires_at" timestamp NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"is_revoked" boolean DEFAULT false NOT NULL,
-	CONSTRAINT "refresh_tokens_token_unique" UNIQUE("token")
+	CONSTRAINT "RefreshTokenTable_token_unique" UNIQUE("token")
 );
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "resources" (
+CREATE TABLE IF NOT EXISTS "ResourceTable" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"title" varchar(255) NOT NULL,
 	"category" varchar(100) NOT NULL,
@@ -154,7 +163,7 @@ CREATE TABLE IF NOT EXISTS "resources" (
 	"created_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "reviews" (
+CREATE TABLE IF NOT EXISTS "ReviewTable" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"reviewer_id" uuid NOT NULL,
 	"freelancer_id" uuid NOT NULL,
@@ -163,17 +172,17 @@ CREATE TABLE IF NOT EXISTS "reviews" (
 	"created_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "skills" (
+CREATE TABLE IF NOT EXISTS "SkillTable" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"name" varchar(255) NOT NULL,
-	CONSTRAINT "skills_name_unique" UNIQUE("name")
+	CONSTRAINT "SkillTable_name_unique" UNIQUE("name")
 );
 --> statement-breakpoint
-CREATE TABLE IF NOT EXISTS "users" (
+CREATE TABLE IF NOT EXISTS "UserTable" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"name" varchar(255) NOT NULL,
-	"email" varchar(255) NOT NULL,
-	"password_hash" text NOT NULL,
+	"email" varchar(255),
+	"password_hash" text,
 	"role" varchar(50) DEFAULT 'user' NOT NULL,
 	"avatar_url" varchar(500),
 	"phone" varchar(20),
@@ -182,121 +191,122 @@ CREATE TABLE IF NOT EXISTS "users" (
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
 	"deleted_at" timestamp,
-	CONSTRAINT "users_email_unique" UNIQUE("email")
+	CONSTRAINT "UserTable_email_unique" UNIQUE("email"),
+	CONSTRAINT "UserTable_phone_unique" UNIQUE("phone")
 );
 --> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "applications" ADD CONSTRAINT "applications_job_id_jobs_id_fk" FOREIGN KEY ("job_id") REFERENCES "public"."jobs"("id") ON DELETE cascade ON UPDATE no action;
+ ALTER TABLE "ApplicationTable" ADD CONSTRAINT "ApplicationTable_job_id_JobTable_id_fk" FOREIGN KEY ("job_id") REFERENCES "public"."JobTable"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "applications" ADD CONSTRAINT "applications_freelancer_id_users_id_fk" FOREIGN KEY ("freelancer_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
+ ALTER TABLE "ApplicationTable" ADD CONSTRAINT "ApplicationTable_freelancer_id_UserTable_id_fk" FOREIGN KEY ("freelancer_id") REFERENCES "public"."UserTable"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;
+ ALTER TABLE "AuditLogTable" ADD CONSTRAINT "AuditLogTable_user_id_UserTable_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."UserTable"("id") ON DELETE set null ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "educations" ADD CONSTRAINT "educations_freelancer_id_freelancer_profiles_user_id_fk" FOREIGN KEY ("freelancer_id") REFERENCES "public"."freelancer_profiles"("user_id") ON DELETE cascade ON UPDATE no action;
+ ALTER TABLE "EducationTable" ADD CONSTRAINT "EducationTable_freelancer_id_FreelancerProfileTable_user_id_fk" FOREIGN KEY ("freelancer_id") REFERENCES "public"."FreelancerProfileTable"("user_id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "event_registrations" ADD CONSTRAINT "event_registrations_event_id_events_id_fk" FOREIGN KEY ("event_id") REFERENCES "public"."events"("id") ON DELETE cascade ON UPDATE no action;
+ ALTER TABLE "EventRegistrationTable" ADD CONSTRAINT "EventRegistrationTable_event_id_EventTable_id_fk" FOREIGN KEY ("event_id") REFERENCES "public"."EventTable"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "experiences" ADD CONSTRAINT "experiences_freelancer_id_freelancer_profiles_user_id_fk" FOREIGN KEY ("freelancer_id") REFERENCES "public"."freelancer_profiles"("user_id") ON DELETE cascade ON UPDATE no action;
+ ALTER TABLE "ExperienceTable" ADD CONSTRAINT "ExperienceTable_freelancer_id_FreelancerProfileTable_user_id_fk" FOREIGN KEY ("freelancer_id") REFERENCES "public"."FreelancerProfileTable"("user_id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "freelancer_profiles" ADD CONSTRAINT "freelancer_profiles_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
+ ALTER TABLE "FreelancerProfileTable" ADD CONSTRAINT "FreelancerProfileTable_user_id_UserTable_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."UserTable"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "freelancer_skills" ADD CONSTRAINT "freelancer_skills_freelancer_id_freelancer_profiles_user_id_fk" FOREIGN KEY ("freelancer_id") REFERENCES "public"."freelancer_profiles"("user_id") ON DELETE cascade ON UPDATE no action;
+ ALTER TABLE "FreelancerSkillTable" ADD CONSTRAINT "FreelancerSkillTable_freelancer_id_FreelancerProfileTable_user_id_fk" FOREIGN KEY ("freelancer_id") REFERENCES "public"."FreelancerProfileTable"("user_id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "freelancer_skills" ADD CONSTRAINT "freelancer_skills_skill_id_skills_id_fk" FOREIGN KEY ("skill_id") REFERENCES "public"."skills"("id") ON DELETE cascade ON UPDATE no action;
+ ALTER TABLE "FreelancerSkillTable" ADD CONSTRAINT "FreelancerSkillTable_skill_id_SkillTable_id_fk" FOREIGN KEY ("skill_id") REFERENCES "public"."SkillTable"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "jobs" ADD CONSTRAINT "jobs_created_by_users_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."users"("id") ON DELETE restrict ON UPDATE no action;
+ ALTER TABLE "JobTable" ADD CONSTRAINT "JobTable_created_by_UserTable_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."UserTable"("id") ON DELETE restrict ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "jobs" ADD CONSTRAINT "jobs_freelancer_id_users_id_fk" FOREIGN KEY ("freelancer_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;
+ ALTER TABLE "JobTable" ADD CONSTRAINT "JobTable_freelancer_id_UserTable_id_fk" FOREIGN KEY ("freelancer_id") REFERENCES "public"."UserTable"("id") ON DELETE set null ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "messages" ADD CONSTRAINT "messages_sender_id_users_id_fk" FOREIGN KEY ("sender_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
+ ALTER TABLE "MessageTable" ADD CONSTRAINT "MessageTable_sender_id_UserTable_id_fk" FOREIGN KEY ("sender_id") REFERENCES "public"."UserTable"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "messages" ADD CONSTRAINT "messages_receiver_id_users_id_fk" FOREIGN KEY ("receiver_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
+ ALTER TABLE "MessageTable" ADD CONSTRAINT "MessageTable_receiver_id_UserTable_id_fk" FOREIGN KEY ("receiver_id") REFERENCES "public"."UserTable"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "notifications" ADD CONSTRAINT "notifications_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
+ ALTER TABLE "NotificationTable" ADD CONSTRAINT "NotificationTable_user_id_UserTable_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."UserTable"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "payments" ADD CONSTRAINT "payments_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
+ ALTER TABLE "PaymentTable" ADD CONSTRAINT "PaymentTable_user_id_UserTable_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."UserTable"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "portfolios" ADD CONSTRAINT "portfolios_freelancer_id_freelancer_profiles_user_id_fk" FOREIGN KEY ("freelancer_id") REFERENCES "public"."freelancer_profiles"("user_id") ON DELETE cascade ON UPDATE no action;
+ ALTER TABLE "PortfolioTable" ADD CONSTRAINT "PortfolioTable_freelancer_id_FreelancerProfileTable_user_id_fk" FOREIGN KEY ("freelancer_id") REFERENCES "public"."FreelancerProfileTable"("user_id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "refresh_tokens" ADD CONSTRAINT "refresh_tokens_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
+ ALTER TABLE "RefreshTokenTable" ADD CONSTRAINT "RefreshTokenTable_user_id_UserTable_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."UserTable"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "reviews" ADD CONSTRAINT "reviews_reviewer_id_users_id_fk" FOREIGN KEY ("reviewer_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
+ ALTER TABLE "ReviewTable" ADD CONSTRAINT "ReviewTable_reviewer_id_UserTable_id_fk" FOREIGN KEY ("reviewer_id") REFERENCES "public"."UserTable"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "reviews" ADD CONSTRAINT "reviews_freelancer_id_users_id_fk" FOREIGN KEY ("freelancer_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
+ ALTER TABLE "ReviewTable" ADD CONSTRAINT "ReviewTable_freelancer_id_UserTable_id_fk" FOREIGN KEY ("freelancer_id") REFERENCES "public"."UserTable"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
 --> statement-breakpoint
-CREATE UNIQUE INDEX IF NOT EXISTS "email_idx" ON "users" USING btree ("email");
+CREATE UNIQUE INDEX IF NOT EXISTS "email_idx" ON "UserTable" USING btree ("email");

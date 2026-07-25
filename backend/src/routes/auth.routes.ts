@@ -12,7 +12,7 @@ import {
   verifyOtpSchema
 } from "../validators/schema.validator";
 import { db } from "../db/connection";
-import { otps, refreshTokens } from "../schema/db.schema";
+import { OtpTable, RefreshTokenTable, UserTable } from "../schema/db.schema";
 import { eq, and } from "drizzle-orm";
 
 const authRouter = new Hono();
@@ -52,7 +52,6 @@ authRouter.post("/refresh", async (c) => {
 });
 
 authRouter.post("/forgot-password", validateBody(forgotPasswordSchema), async (c) => {
-  // In production, send email. For mock/dev, return code/token.
   return c.json({
     success: true,
     message: "Password reset link sent to email (Mocked)",
@@ -91,8 +90,7 @@ authRouter.post("/google", async (c) => {
 
     const payload = {
       id: user.id,
-      email: user.email,
-      role: user.role as any,
+      role: user.role as "admin" | "user" | "freelancer",
     };
 
     const accessToken = await generateAccessToken(payload);
@@ -120,18 +118,15 @@ authRouter.post("/google", async (c) => {
 authRouter.post("/otp/send", validateBody(sendOtpSchema), async (c) => {
   const { phone } = c.get("validBody" as any);
 
-  // Generate a random 6-digit numeric OTP
   const code = Math.floor(100000 + Math.random() * 900000).toString();
   const codeHash = await Bun.password.hash(code, { algorithm: "argon2id" });
 
   const expiresAt = new Date();
   expiresAt.setMinutes(expiresAt.getMinutes() + 5); // 5 minute TTL
 
-  // Delete previous pending OTPs for this phone number
-  await db.delete(otps).where(eq(otps.phone, phone));
+  await db.delete(OtpTable).where(eq(OtpTable.phone, phone));
 
-  // Save to database
-  await db.insert(otps).values({
+  await db.insert(OtpTable).values({
     phone,
     codeHash,
     expiresAt,
@@ -140,18 +135,17 @@ authRouter.post("/otp/send", validateBody(sendOtpSchema), async (c) => {
   return c.json({
     success: true,
     message: "OTP sent successfully to phone",
-    debugCode: code, // Returned for testing during development
+    debugCode: code,
   });
 });
 
 authRouter.post("/otp/verify", validateBody(verifyOtpSchema), async (c) => {
   const { phone, code, name, role } = c.get("validBody" as any);
 
-  // Look up active OTP
   const [record] = await db
     .select()
-    .from(otps)
-    .where(eq(otps.phone, phone))
+    .from(OtpTable)
+    .where(eq(OtpTable.phone, phone))
     .limit(1);
 
   if (!record || new Date() > record.expiresAt) {
@@ -159,36 +153,33 @@ authRouter.post("/otp/verify", validateBody(verifyOtpSchema), async (c) => {
   }
 
   if (record.attempts >= 3) {
-    await db.delete(otps).where(eq(otps.phone, phone));
+    await db.delete(OtpTable).where(eq(OtpTable.phone, phone));
     return c.json({ success: false, error: "Too many failed attempts. Request a new OTP." }, 400);
   }
 
-  // Verify code
   const isValid = await Bun.password.verify(code, record.codeHash);
   if (!isValid) {
     await db
-      .update(otps)
+      .update(OtpTable)
       .set({ attempts: record.attempts + 1 })
-      .where(eq(otps.id, record.id));
+      .where(eq(OtpTable.id, record.id));
     return c.json({ success: false, error: "Invalid OTP code" }, 400);
   }
 
-  // Find or create user
   let user = await db
     .select()
-    .from(users)
-    .where(eq(users.phone, phone))
+    .from(UserTable)
+    .where(eq(UserTable.phone, phone))
     .limit(1)
     .then((r) => r[0] || null);
 
   if (!user) {
-    // If user doesn't exist, register them
     if (!name) {
       return c.json({ success: false, error: "Name is required for registration" }, 400);
     }
     
     const [newUser] = await db
-      .insert(users)
+      .insert(UserTable)
       .values({
         name,
         phone,
@@ -204,28 +195,24 @@ authRouter.post("/otp/verify", validateBody(verifyOtpSchema), async (c) => {
     return c.json({ success: false, error: "Your account is suspended" }, 403);
   }
 
-  // Generate tokens
   const payload = {
     id: user.id,
-    email: user.email || "",
-    role: user.role as any,
+    role: user.role as "admin" | "user" | "freelancer",
   };
 
   const accessToken = await generateAccessToken(payload);
   const refreshToken = await generateRefreshToken(payload);
 
-  // Save refresh token
   const refreshExpires = new Date();
   refreshExpires.setDate(refreshExpires.getDate() + 7);
 
-  await db.insert(refreshTokens).values({
+  await db.insert(RefreshTokenTable).values({
     userId: user.id,
     token: refreshToken,
     expiresAt: refreshExpires,
   });
 
-  // Clean up verification record
-  await db.delete(otps).where(eq(otps.phone, phone));
+  await db.delete(OtpTable).where(eq(OtpTable.phone, phone));
 
   return c.json({
     success: true,

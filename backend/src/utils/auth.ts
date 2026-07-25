@@ -6,7 +6,6 @@ const JWT_REFRESH_SECRET_BYTES = new TextEncoder().encode(env.JWT_REFRESH_SECRET
 
 export interface JWTPayload {
   id: string;
-  email: string;
   role: "admin" | "user" | "freelancer";
 }
 

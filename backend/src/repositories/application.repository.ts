@@ -1,30 +1,29 @@
 import { eq, and } from "drizzle-orm";
 import { db } from "../db/connection";
-import { applications, jobs, users } from "../schema/db.schema";
+import { ApplicationTable, JobTable, UserTable } from "../schema/db.schema";
 
-export type ApplicationInsert = typeof applications.$inferInsert;
-export type ApplicationSelect = typeof applications.$inferSelect;
+export type ApplicationInsert = typeof ApplicationTable.$inferInsert;
+export type ApplicationSelect = typeof ApplicationTable.$inferSelect;
 
 export class ApplicationRepository {
   async findById(id: string): Promise<ApplicationSelect | null> {
-    const results = await db.select().from(applications).where(eq(applications.id, id)).limit(1);
+    const results = await db.select().from(ApplicationTable).where(eq(ApplicationTable.id, id)).limit(1);
     return results[0] || null;
   }
 
   async create(data: ApplicationInsert): Promise<ApplicationSelect> {
-    const results = await db.insert(applications).values(data).returning();
+    const results = await db.insert(ApplicationTable).values(data).returning();
     return results[0];
   }
 
   async updateStatus(id: string, status: "pending" | "accepted" | "rejected", userId: string, isAdmin: boolean): Promise<ApplicationSelect | null> {
-    // If not admin, check if user is the creator of the job
     let canUpdate = isAdmin;
     if (!isAdmin) {
       const [app] = await db
-        .select({ jobCreator: jobs.createdBy })
-        .from(applications)
-        .innerJoin(jobs, eq(applications.jobId, jobs.id))
-        .where(eq(applications.id, id))
+        .select({ jobCreator: JobTable.createdBy })
+        .from(ApplicationTable)
+        .innerJoin(JobTable, eq(ApplicationTable.jobId, JobTable.id))
+        .where(eq(ApplicationTable.id, id))
         .limit(1);
       
       if (app && app.jobCreator === userId) {
@@ -35,9 +34,9 @@ export class ApplicationRepository {
     if (!canUpdate) return null;
 
     const results = await db
-      .update(applications)
+      .update(ApplicationTable)
       .set({ status })
-      .where(eq(applications.id, id))
+      .where(eq(ApplicationTable.id, id))
       .returning();
     return results[0] || null;
   }
@@ -45,35 +44,35 @@ export class ApplicationRepository {
   async listByJob(jobId: string) {
     return await db
       .select({
-        id: applications.id,
-        proposal: applications.proposal,
-        amount: applications.amount,
-        status: applications.status,
-        createdAt: applications.createdAt,
-        freelancerId: applications.freelancerId,
-        freelancerName: users.name,
-        freelancerAvatar: users.avatarUrl,
+        id: ApplicationTable.id,
+        proposal: ApplicationTable.proposal,
+        amount: ApplicationTable.amount,
+        status: ApplicationTable.status,
+        createdAt: ApplicationTable.createdAt,
+        freelancerId: ApplicationTable.freelancerId,
+        freelancerName: UserTable.name,
+        freelancerAvatar: UserTable.avatarUrl,
       })
-      .from(applications)
-      .innerJoin(users, eq(applications.freelancerId, users.id))
-      .where(eq(applications.jobId, jobId));
+      .from(ApplicationTable)
+      .innerJoin(UserTable, eq(ApplicationTable.freelancerId, UserTable.id))
+      .where(eq(ApplicationTable.jobId, jobId));
   }
 
   async listByFreelancer(freelancerId: string) {
     return await db
       .select({
-        id: applications.id,
-        proposal: applications.proposal,
-        amount: applications.amount,
-        status: applications.status,
-        createdAt: applications.createdAt,
-        jobId: applications.jobId,
-        jobTitle: jobs.title,
-        jobBudget: jobs.budget,
+        id: ApplicationTable.id,
+        proposal: ApplicationTable.proposal,
+        amount: ApplicationTable.amount,
+        status: ApplicationTable.status,
+        createdAt: ApplicationTable.createdAt,
+        jobId: ApplicationTable.jobId,
+        jobTitle: JobTable.title,
+        jobBudget: JobTable.budget,
       })
-      .from(applications)
-      .innerJoin(jobs, eq(applications.jobId, jobs.id))
-      .where(eq(applications.freelancerId, freelancerId));
+      .from(ApplicationTable)
+      .innerJoin(JobTable, eq(ApplicationTable.jobId, JobTable.id))
+      .where(eq(ApplicationTable.freelancerId, freelancerId));
   }
 }
 export const applicationRepository = new ApplicationRepository();

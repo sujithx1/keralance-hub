@@ -1,11 +1,9 @@
 import { Hono } from "hono";
 import { requireAuth, requireRoles } from "../middleware/auth.middleware";
 import { userRepository } from "../repositories/user.repository";
-import { jobRepository } from "../repositories/job.repository";
-import { freelancerRepository } from "../repositories/freelancer.repository";
 import { db } from "../db/connection";
 import { count, desc } from "drizzle-orm";
-import { auditLogs, users, jobs, applications } from "../schema/db.schema";
+import { AuditLogTable, UserTable, JobTable, ApplicationTable } from "../schema/db.schema";
 
 const adminRouter = new Hono();
 
@@ -13,12 +11,11 @@ adminRouter.use("/*", requireAuth());
 adminRouter.use("/*", requireRoles(["admin"]));
 
 adminRouter.get("/dashboard", async (c) => {
-  // Aggregate dashboard stats
-  const [totalUsers] = await db.select({ count: count() }).from(users);
-  const [jobsCount] = await db.select({ count: count() }).from(jobs);
-  const [appsCount] = await db.select({ count: count() }).from(applications);
+  const [totalUsers] = await db.select({ count: count() }).from(UserTable);
+  const [jobsCount] = await db.select({ count: count() }).from(JobTable);
+  const [appsCount] = await db.select({ count: count() }).from(ApplicationTable);
 
-  const logs = await db.select().from(auditLogs).orderBy(desc(auditLogs.createdAt)).limit(10);
+  const logs = await db.select().from(AuditLogTable).orderBy(desc(AuditLogTable.createdAt)).limit(10);
 
   return c.json({
     success: true,

@@ -1,49 +1,49 @@
 import { eq, and, isNull, or, like, desc, count, sql } from "drizzle-orm";
 import { db } from "../db/connection";
-import { jobs, users } from "../schema/db.schema";
+import { JobTable, UserTable } from "../schema/db.schema";
 
-export type JobInsert = typeof jobs.$inferInsert;
-export type JobSelect = typeof jobs.$inferSelect;
+export type JobInsert = typeof JobTable.$inferInsert;
+export type JobSelect = typeof JobTable.$inferSelect;
 
 export class JobRepository {
   async findById(id: string) {
     const results = await db
       .select({
-        id: jobs.id,
-        title: jobs.title,
-        description: jobs.description,
-        budget: jobs.budget,
-        category: jobs.category,
-        status: jobs.status,
-        createdBy: jobs.createdBy,
-        freelancerId: jobs.freelancerId,
-        deadline: jobs.deadline,
-        createdAt: jobs.createdAt,
-        updatedAt: jobs.updatedAt,
-        clientName: users.name,
-        clientEmail: users.email,
-        clientAvatarUrl: users.avatarUrl,
+        id: JobTable.id,
+        title: JobTable.title,
+        description: JobTable.description,
+        budget: JobTable.budget,
+        category: JobTable.category,
+        status: JobTable.status,
+        createdBy: JobTable.createdBy,
+        freelancerId: JobTable.freelancerId,
+        deadline: JobTable.deadline,
+        createdAt: JobTable.createdAt,
+        updatedAt: JobTable.updatedAt,
+        clientName: UserTable.name,
+        clientEmail: UserTable.email,
+        clientAvatarUrl: UserTable.avatarUrl,
       })
-      .from(jobs)
-      .innerJoin(users, eq(jobs.createdBy, users.id))
-      .where(and(eq(jobs.id, id), isNull(jobs.deletedAt)))
+      .from(JobTable)
+      .innerJoin(UserTable, eq(JobTable.createdBy, UserTable.id))
+      .where(and(eq(JobTable.id, id), isNull(JobTable.deletedAt)))
       .limit(1);
     return results[0] || null;
   }
 
   async create(data: JobInsert): Promise<JobSelect> {
-    const results = await db.insert(jobs).values(data).returning();
+    const results = await db.insert(JobTable).values(data).returning();
     return results[0];
   }
 
   async update(id: string, data: Partial<JobInsert>, userId: string, isAdmin: boolean): Promise<JobSelect | null> {
-    const conditions = [eq(jobs.id, id), isNull(jobs.deletedAt)];
+    const conditions = [eq(JobTable.id, id), isNull(JobTable.deletedAt)];
     if (!isAdmin) {
-      conditions.push(eq(jobs.createdBy, userId));
+      conditions.push(eq(JobTable.createdBy, userId));
     }
 
     const results = await db
-      .update(jobs)
+      .update(JobTable)
       .set({ ...data, updatedAt: new Date() })
       .where(and(...conditions))
       .returning();
@@ -51,13 +51,13 @@ export class JobRepository {
   }
 
   async softDelete(id: string, userId: string, isAdmin: boolean): Promise<boolean> {
-    const conditions = [eq(jobs.id, id), isNull(jobs.deletedAt)];
+    const conditions = [eq(JobTable.id, id), isNull(JobTable.deletedAt)];
     if (!isAdmin) {
-      conditions.push(eq(jobs.createdBy, userId));
+      conditions.push(eq(JobTable.createdBy, userId));
     }
 
     const results = await db
-      .update(jobs)
+      .update(JobTable)
       .set({ deletedAt: new Date(), updatedAt: new Date() })
       .where(and(...conditions))
       .returning();
@@ -75,66 +75,62 @@ export class JobRepository {
     const limit = filters.limit || 10;
     const offset = (page - 1) * limit;
 
-    const conditions = [isNull(jobs.deletedAt)];
+    const conditions = [isNull(JobTable.deletedAt)];
 
     if (filters.searchQuery) {
       conditions.push(
         or(
-          like(jobs.title, `%${filters.searchQuery}%`),
-          like(jobs.description, `%${filters.searchQuery}%`),
-          like(jobs.category, `%${filters.searchQuery}%`)
+          like(JobTable.title, `%${filters.searchQuery}%`),
+          like(JobTable.description, `%${filters.searchQuery}%`),
+          like(JobTable.category, `%${filters.searchQuery}%`)
         )!
       );
     }
 
-    // In a real DB, location might map to user's location or a location field on jobs.
-    // For simplicity, we filter by category/title or we join with the creator's location
     if (filters.location && filters.location !== "All") {
       conditions.push(
         sql`EXISTS (
-          SELECT 1 FROM ${users} 
-          WHERE ${users.id} = ${jobs.createdBy} 
-          AND ${users.phone} LIKE ${`%${filters.location}%`} 
-          OR ${jobs.description} LIKE ${`%${filters.location}%`}
+          SELECT 1 FROM ${UserTable} 
+          WHERE ${UserTable.id} = ${JobTable.createdBy} 
+          AND ${UserTable.phone} LIKE ${`%${filters.location}%`} 
+          OR ${JobTable.description} LIKE ${`%${filters.location}%`}
         )`
       );
     }
 
     if (filters.remoteOnly) {
-      conditions.push(like(jobs.description, "%Remote%"));
+      conditions.push(like(JobTable.description, "%Remote%"));
     }
 
     const whereClause = and(...conditions);
 
     const countQuery = await db
       .select({ count: count() })
-      .from(jobs)
+      .from(JobTable)
       .where(whereClause);
 
     const rawJobs = await db
       .select({
-        id: jobs.id,
-        title: jobs.title,
-        description: jobs.description,
-        budget: jobs.budget,
-        category: jobs.category,
-        status: jobs.status,
-        deadline: jobs.deadline,
-        createdAt: jobs.createdAt,
-        createdBy: jobs.createdBy,
-        clientName: users.name,
-        clientAvatarUrl: users.avatarUrl,
+        id: JobTable.id,
+        title: JobTable.title,
+        description: JobTable.description,
+        budget: JobTable.budget,
+        category: JobTable.category,
+        status: JobTable.status,
+        deadline: JobTable.deadline,
+        createdAt: JobTable.createdAt,
+        createdBy: JobTable.createdBy,
+        clientName: UserTable.name,
+        clientAvatarUrl: UserTable.avatarUrl,
       })
-      .from(jobs)
-      .innerJoin(users, eq(jobs.createdBy, users.id))
+      .from(JobTable)
+      .innerJoin(UserTable, eq(JobTable.createdBy, UserTable.id))
       .where(whereClause)
-      .orderBy(desc(jobs.createdAt))
+      .orderBy(desc(JobTable.createdAt))
       .limit(limit)
       .offset(offset);
 
-    // Format output matching UI structures
     const data = rawJobs.map((j) => {
-      // Parse skills from description or provide default tags
       const skills = j.description
         .split(" ")
         .filter((w) => w.length > 3 && /^[A-Za-z]+$/.test(w))

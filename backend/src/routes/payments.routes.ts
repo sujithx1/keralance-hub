@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { requireAuth } from "../middleware/auth.middleware";
 import { db } from "../db/connection";
-import { payments } from "../schema/db.schema";
+import { PaymentTable } from "../schema/db.schema";
 import { z } from "zod";
 import { validateBody } from "../middleware/validation.middleware";
 
@@ -18,17 +18,16 @@ paymentsRouter.post("/", validateBody(createPaymentSchema), async (c) => {
   const userId = c.get("userId");
   const body = c.get("validBody" as any);
 
-  // Generate a mock transaction ID
   const transactionId = "TXN-" + Math.random().toString(36).substring(2, 11).toUpperCase();
 
   const [payment] = await db
-    .insert(payments)
+    .insert(PaymentTable)
     .values({
       userId,
       amount: body.amount.toString(),
       currency: body.currency,
       transactionId,
-      status: "completed", // Auto-complete mock payment
+      status: "completed",
     })
     .returning();
 

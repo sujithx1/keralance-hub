@@ -1,16 +1,16 @@
 import { db, client } from "./connection";
 import {
-  users,
-  freelancerProfiles,
-  skills,
-  freelancerSkills,
-  portfolios,
-  experiences,
-  educations,
-  jobs,
-  reviews,
-  events,
-  resources,
+  UserTable,
+  FreelancerProfileTable,
+  SkillTable,
+  FreelancerSkillTable,
+  PortfolioTable,
+  ExperienceTable,
+  EducationTable,
+  JobTable,
+  ReviewTable,
+  EventTable,
+  ResourceTable,
 } from "../schema/db.schema";
 import { logger } from "../lib/logger";
 
@@ -18,27 +18,26 @@ async function seed() {
   logger.info("🌱 Seeding database...");
 
   // 1. Clean existing records
-  await db.delete(freelancerSkills);
-  await db.delete(portfolios);
-  await db.delete(experiences);
-  await db.delete(educations);
-  await db.delete(reviews);
-  await db.delete(jobs);
-  await db.delete(freelancerProfiles);
-  await db.delete(skills);
-  await db.delete(resources);
-  await db.delete(events);
-  await db.delete(users);
+  await db.delete(FreelancerSkillTable);
+  await db.delete(PortfolioTable);
+  await db.delete(ExperienceTable);
+  await db.delete(EducationTable);
+  await db.delete(ReviewTable);
+  await db.delete(JobTable);
+  await db.delete(FreelancerProfileTable);
+  await db.delete(SkillTable);
+  await db.delete(ResourceTable);
+  await db.delete(EventTable);
+  await db.delete(UserTable);
 
   logger.info("🗑️ Cleared previous data.");
 
-  // Hash standard passwords
   const passwordHash = await Bun.password.hash("password123", { algorithm: "argon2id" });
   const adminHash = await Bun.password.hash("Sujith@123", { algorithm: "argon2id" });
 
   // 2. Create Users
   const [admin] = await db
-    .insert(users)
+    .insert(UserTable)
     .values({
       name: "sujith",
       email: "sujith.c.dev@gmail.com",
@@ -50,7 +49,7 @@ async function seed() {
     .returning();
 
   const [client1] = await db
-    .insert(users)
+    .insert(UserTable)
     .values({
       name: "Gautham Krishna",
       email: "gautham@neokeralalabs.com",
@@ -62,7 +61,7 @@ async function seed() {
     .returning();
 
   const [client2] = await db
-    .insert(users)
+    .insert(UserTable)
     .values({
       name: "Ananya Pillai",
       email: "ananya@malabarcoffee.com",
@@ -73,9 +72,8 @@ async function seed() {
     })
     .returning();
 
-  // Freelancer User accounts
   const [fUser1] = await db
-    .insert(users)
+    .insert(UserTable)
     .values({
       name: "Arjun K. Varma",
       email: "arjun@keralance.dev",
@@ -87,7 +85,7 @@ async function seed() {
     .returning();
 
   const [fUser2] = await db
-    .insert(users)
+    .insert(UserTable)
     .values({
       name: "Meera Nair",
       email: "meera@keralance.dev",
@@ -99,7 +97,7 @@ async function seed() {
     .returning();
 
   const [fUser3] = await db
-    .insert(users)
+    .insert(UserTable)
     .values({
       name: "Rahul Siddharth",
       email: "rahul@keralance.dev",
@@ -113,11 +111,11 @@ async function seed() {
   logger.info("👥 Users created.");
 
   // 3. Create Freelancer Profiles
-  await db.insert(freelancerProfiles).values([
+  await db.insert(FreelancerProfileTable).values([
     {
       userId: fUser1.id,
       title: "Senior Full Stack Dev",
-      bio: "Ex-startup lead engineer specializing in fast Next.js apps, Postgres design, and clean architecture.",
+      bio: "Ex-startup lead engineer specializing in Next.js apps, Postgres design, and clean architecture.",
       hourlyRate: "1500.00",
       location: "Kochi",
       availability: "available",
@@ -146,14 +144,13 @@ async function seed() {
   const skillNames = ["Next.js", "React Native", "PostgreSQL", "Go", "Figma", "Webflow", "Python", "FastAPI"];
   const insertedSkills: { id: string; name: string }[] = [];
   for (const name of skillNames) {
-    const [s] = await db.insert(skills).values({ name }).returning();
+    const [s] = await db.insert(SkillTable).values({ name }).returning();
     insertedSkills.push(s);
   }
 
-  // Link Freelancer Skills
   const getSkillId = (name: string) => insertedSkills.find((s) => s.name === name)!.id;
 
-  await db.insert(freelancerSkills).values([
+  await db.insert(FreelancerSkillTable).values([
     { freelancerId: fUser1.id, skillId: getSkillId("Next.js") },
     { freelancerId: fUser1.id, skillId: getSkillId("React Native") },
     { freelancerId: fUser1.id, skillId: getSkillId("PostgreSQL") },
@@ -167,7 +164,7 @@ async function seed() {
   logger.info("🛠️ Skills mapped.");
 
   // 5. Add experiences & portfolios
-  await db.insert(experiences).values([
+  await db.insert(ExperienceTable).values([
     {
       freelancerId: fUser1.id,
       company: "TechMalabar",
@@ -177,7 +174,7 @@ async function seed() {
     },
   ]);
 
-  await db.insert(portfolios).values([
+  await db.insert(PortfolioTable).values([
     {
       freelancerId: fUser1.id,
       title: "keralance HUB Portal",
@@ -187,7 +184,7 @@ async function seed() {
   ]);
 
   // 6. Create Jobs
-  await db.insert(jobs).values([
+  await db.insert(JobTable).values([
     {
       title: "React & Supabase Platform Developer",
       description: "We are seeking a senior frontend engineer to build out our collaboration portal. Uses React & Supabase.",
@@ -209,7 +206,7 @@ async function seed() {
   logger.info("📋 Jobs seeded.");
 
   // 7. Add Reviews
-  await db.insert(reviews).values([
+  await db.insert(ReviewTable).values([
     {
       reviewerId: client1.id,
       freelancerId: fUser1.id,
@@ -225,7 +222,7 @@ async function seed() {
   ]);
 
   // 8. Add Events
-  await db.insert(events).values([
+  await db.insert(EventTable).values([
     {
       type: "workshop",
       title: "Freelancing 101: Landing International Clients",
@@ -253,7 +250,7 @@ async function seed() {
   ]);
 
   // 9. Add Resources
-  await db.insert(resources).values([
+  await db.insert(ResourceTable).values([
     {
       title: "Freelance Service Agreement (Indian Contract Act Compliant)",
       category: "Legal & Contracts",
