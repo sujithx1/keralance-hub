@@ -1,5 +1,7 @@
 import { Hono } from "hono";
 import { authService } from "../services/auth.service";
+import { userRepository } from "../repositories/user.repository";
+import { generateAccessToken, generateRefreshToken } from "../utils/auth";
 import { validateBody } from "../middleware/validation.middleware";
 import { registerSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema } from "../validators/schema.validator";
 
@@ -54,6 +56,55 @@ authRouter.post("/reset-password", validateBody(resetPasswordSchema), async (c) 
 
 authRouter.post("/verify-email", async (c) => {
   return c.json({ success: true, message: "Email verified successfully (Mocked)" });
+});
+
+authRouter.post("/google", async (c) => {
+  const { credentialToken } = await c.req.json().catch(() => ({}));
+  if (!credentialToken) {
+    return c.json({ success: false, error: "Google credential token is required" }, 400);
+  }
+
+  try {
+    const mockEmail = "googleuser@keralancehub.com";
+    const mockName = "Google Member";
+
+    let user = await userRepository.findByEmail(mockEmail);
+    if (!user) {
+      user = await userRepository.create({
+        name: mockName,
+        email: mockEmail,
+        passwordHash: "OAUTH_GOOGLE_EXTERNAL",
+        role: "user",
+        emailVerified: true,
+      });
+    }
+
+    const payload = {
+      id: user.id,
+      email: user.email,
+      role: user.role as any,
+    };
+
+    const accessToken = await generateAccessToken(payload);
+    const refreshToken = await generateRefreshToken(payload);
+
+    return c.json({
+      success: true,
+      message: "Authenticated with Google OAuth successfully",
+      data: {
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        },
+        accessToken,
+        refreshToken,
+      }
+    });
+  } catch (error: any) {
+    return c.json({ success: false, error: error.message }, 500);
+  }
 });
 
 export { authRouter };

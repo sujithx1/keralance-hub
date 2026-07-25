@@ -56,7 +56,7 @@ async function seed() {
       email: "gautham@neokeralalabs.com",
       passwordHash,
       role: "user",
-      phone: "Kochi",
+      phone: "7994591024",
       emailVerified: true,
     })
     .returning();
@@ -68,7 +68,7 @@ async function seed() {
       email: "ananya@malabarcoffee.com",
       passwordHash,
       role: "user",
-      phone: "Calicut",
+      phone: "7994591025",
       emailVerified: true,
     })
     .returning();
