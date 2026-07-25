@@ -1,13 +1,22 @@
 import { useState } from "react";
-import { Menu, X, ArrowUpRight } from "lucide-react";
+import { Menu, X, ArrowUpRight, LogOut, User as UserIcon } from "lucide-react";
 import Logo from "./Logo";
 
 interface NavbarProps {
   activePage: string;
   setActivePage: (page: string) => void;
+  currentUser: { name: string; email: string; role: "admin" | "user" | "freelancer" } | null;
+  onOpenAuth: () => void;
+  onLogout: () => void;
 }
 
-export default function Navbar({ activePage, setActivePage }: NavbarProps) {
+export default function Navbar({
+  activePage,
+  setActivePage,
+  currentUser,
+  onOpenAuth,
+  onLogout
+}: NavbarProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const navLinks = [
@@ -16,9 +25,13 @@ export default function Navbar({ activePage, setActivePage }: NavbarProps) {
     { name: "Jobs", key: "jobs" },
     { name: "Events", key: "events" },
     { name: "Resources", key: "resources" },
-    { name: "Dashboard", key: "dashboard" },
     { name: "About", key: "about" },
   ];
+
+  // Only show Dashboard link when authenticated
+  if (currentUser) {
+    navLinks.splice(5, 0, { name: "Dashboard", key: "dashboard" });
+  }
 
   const handleLinkClick = (key: string) => {
     setActivePage(key);
@@ -62,7 +75,7 @@ export default function Navbar({ activePage, setActivePage }: NavbarProps) {
             })}
           </div>
 
-          {/* Call to Actions */}
+          {/* Call to Actions / User State */}
           <div className="hidden lg:flex items-center space-x-4">
             <button
               onClick={() => handleLinkClick("contact")}
@@ -72,18 +85,38 @@ export default function Navbar({ activePage, setActivePage }: NavbarProps) {
             >
               Contact Us
             </button>
-            <button
-              onClick={() => {
-                handleLinkClick("home");
-                setTimeout(() => {
-                  document.getElementById("join-cta")?.scrollIntoView({ behavior: "smooth" });
-                }, 100);
-              }}
-              className="bg-primary hover:bg-primary-hover text-white px-5 py-2.5 rounded-xl text-sm font-heading font-semibold transition-all duration-300 flex items-center space-x-1 shadow-md shadow-primary/10 hover:shadow-primary/20 hover:-translate-y-0.5 cursor-pointer"
-            >
-              <span>Join Community</span>
-              <ArrowUpRight className="h-4 w-4" />
-            </button>
+
+            {currentUser ? (
+              <div className="flex items-center space-x-3.5 pl-4 border-l border-primary/10">
+                <div className="flex items-center space-x-2 bg-primary/5 border border-primary/10 px-3 py-1.5 rounded-xl">
+                  <div className="h-6 w-6 rounded-full bg-primary text-white flex items-center justify-center text-xs font-bold font-heading">
+                    {currentUser.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="text-left">
+                    <span className="text-xs font-bold text-primary block leading-none">{currentUser.name}</span>
+                    <span className="text-[9px] text-accent font-extrabold uppercase tracking-wider block mt-0.5 leading-none">
+                      {currentUser.role}
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={onLogout}
+                  className="p-2 rounded-xl text-red-500 hover:bg-red-50 transition-colors border border-transparent hover:border-red-100 cursor-pointer flex items-center space-x-1"
+                  title="Sign Out"
+                >
+                  <LogOut className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={onOpenAuth}
+                className="bg-primary hover:bg-primary-hover text-white px-5 py-2.5 rounded-xl text-sm font-heading font-semibold transition-all duration-300 flex items-center space-x-1 shadow-md shadow-primary/10 hover:shadow-primary/20 hover:-translate-y-0.5 cursor-pointer"
+              >
+                <span>Sign In</span>
+                <ArrowUpRight className="h-4 w-4" />
+              </button>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -116,24 +149,47 @@ export default function Navbar({ activePage, setActivePage }: NavbarProps) {
               );
             })}
             <div className="h-px bg-primary/10 my-2" />
+            
             <button
               onClick={() => handleLinkClick("contact")}
               className="font-heading text-left text-base font-semibold text-text-muted px-3 py-2.5 hover:text-primary hover:bg-white/40 rounded-xl"
             >
               Contact Us
             </button>
-            <button
-              onClick={() => {
-                handleLinkClick("home");
-                setTimeout(() => {
-                  document.getElementById("join-cta")?.scrollIntoView({ behavior: "smooth" });
-                }, 100);
-              }}
-              className="bg-primary hover:bg-primary-hover text-white text-center px-4 py-3 rounded-xl font-heading font-semibold transition-colors flex items-center justify-center space-x-1.5 shadow-sm"
-            >
-              <span>Join Community</span>
-              <ArrowUpRight className="h-4.5 w-4.5" />
-            </button>
+
+            {currentUser ? (
+              <div className="p-3 bg-primary/5 border border-primary/10 rounded-2xl flex items-center justify-between">
+                <div className="flex items-center space-x-2.5">
+                  <div className="h-8 w-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold">
+                    {currentUser.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <h4 className="font-heading font-bold text-sm text-primary leading-none">{currentUser.name}</h4>
+                    <span className="text-[10px] text-accent font-extrabold uppercase mt-0.5 block">{currentUser.role}</span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    onLogout();
+                    setIsOpen(false);
+                  }}
+                  className="bg-red-50 hover:bg-red-100 text-red-600 p-2 rounded-xl transition-colors"
+                >
+                  <LogOut className="h-4.5 w-4.5" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => {
+                  onOpenAuth();
+                  setIsOpen(false);
+                }}
+                className="bg-primary hover:bg-primary-hover text-white text-center px-4 py-3 rounded-xl font-heading font-semibold transition-colors flex items-center justify-center space-x-1.5 shadow-sm"
+              >
+                <span>Sign In</span>
+                <ArrowUpRight className="h-4.5 w-4.5" />
+              </button>
+            )}
           </div>
         )}
       </div>
