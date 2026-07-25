@@ -1,21 +1,12 @@
 import { useState } from "react";
 import {
   Briefcase,
-  Mail,
-  Eye,
   Trash2,
-  ExternalLink,
-  Sparkles,
-  MessageSquare,
   ShieldAlert,
   UserCheck,
   CheckCircle,
   XCircle,
   Ban,
-  Wallet,
-  Clock,
-  MapPin,
-  FileText,
   Plus
 } from "lucide-react";
 
@@ -63,13 +54,11 @@ const INITIAL_JOBS = [
 ];
 
 export default function DashboardView({
-  savedJobs,
-  onToggleSaveJob,
+  savedJobs: _savedJobs,
+  onToggleSaveJob: _onToggleSaveJob,
   onNavigate,
   currentUser
 }: DashboardViewProps) {
-  const [activeTab, setActiveTab] = useState("overview");
-
   // State managers for Admin
   const [freelancersList, setFreelancersList] = useState(INITIAL_FREELANCERS);
   const [clientsList, setClientsList] = useState(INITIAL_CLIENTS);
@@ -82,7 +71,7 @@ export default function DashboardView({
   const [hourlyRate, setHourlyRate] = useState("1500");
   const [skillsList, setSkillsList] = useState(["Next.js", "PostgreSQL", "Go", "TypeScript"]);
   const [newSkill, setNewSkill] = useState("");
-  const [activeJobs, setActiveJobs] = useState([
+  const [activeJobs] = useState([
     { title: "React & Supabase Platform Developer", client: "NeoKerala Labs", budget: "₹80,000", status: "Active" }
   ]);
 
