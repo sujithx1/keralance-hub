@@ -18,11 +18,11 @@ export const users = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     name: varchar("name", { length: 255 }).notNull(),
-    email: varchar("email", { length: 255 }).notNull().unique(),
-    passwordHash: text("password_hash").notNull(),
+    email: varchar("email", { length: 255 }).unique(), // Nullable for phone OTP login
+    passwordHash: text("password_hash"), // Nullable for passwordless login
     role: varchar("role", { length: 50 }).notNull().default("user"), // 'admin', 'user', 'freelancer'
     avatarUrl: varchar("avatar_url", { length: 500 }),
-    phone: varchar("phone", { length: 20 }),
+    phone: varchar("phone", { length: 20 }).unique(), // Unique phone number
     status: varchar("status", { length: 50 }).notNull().default("active"), // 'active', 'banned'
     emailVerified: boolean("email_verified").notNull().default(false),
     createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -33,6 +33,16 @@ export const users = pgTable(
     emailIdx: uniqueIndex("email_idx").on(table.email),
   })
 );
+
+// 1.1 OTP Verification Table
+export const otps = pgTable("otps", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  phone: varchar("phone", { length: 20 }).notNull(),
+  codeHash: varchar("code_hash", { length: 255 }).notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  attempts: integer("attempts").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
 
 // 2. Refresh Tokens Table
 export const refreshTokens = pgTable("refresh_tokens", {
