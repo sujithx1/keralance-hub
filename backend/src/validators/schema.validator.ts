@@ -66,3 +66,15 @@ export const sendMessageSchema = z.object({
   content: z.string().min(1, "Message content cannot be empty"),
   attachments: z.array(z.string().url()).optional(),
 });
+
+// OTP Schemas
+export const sendOtpSchema = z.object({
+  phone: z.string().regex(/^\+?[1-9]\d{1,14}$/, "Invalid phone format (e.g. +917994591023)"),
+});
+
+export const verifyOtpSchema = z.object({
+  phone: z.string().regex(/^\+?[1-9]\d{1,14}$/, "Invalid phone format"),
+  code: z.string().length(6, "OTP must be exactly 6 digits"),
+  name: z.string().min(2, "Name must be at least 2 characters").optional(),
+  role: z.enum(["admin", "user", "freelancer"]).default("user").optional(),
+});
