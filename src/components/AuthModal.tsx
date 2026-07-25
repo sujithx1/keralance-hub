@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { X, User, Shield, Sparkles, Phone, Lock } from "lucide-react";
-import { useMutation } from "@tanstack/react-query";
-import { axiosInstance } from "@/lib/api";
+import { useSendOtp, useVerifyOtp } from "@/hooks/api/useAuth";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -19,48 +18,23 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
   const [role, setRole] = useState<"admin" | "user" | "freelancer">("freelancer");
   const [error, setError] = useState("");
 
-  // TanStack Query Send OTP Mutation
-  const sendOtpMutation = useMutation({
-    mutationFn: async (phoneNum: string) => {
-      const payload: any = { phone: phoneNum };
-      const response = await axiosInstance.post("/auth/otp/send", payload);
-      return response.data;
-    },
-    onSuccess: (data) => {
-      setDebugCode(data.debugCode || "");
-      setOtpSent(true);
-      setError("");
-    },
-    onError: (err: any) => {
-      setError(err.response?.data?.error || "Failed to send verification code. Try again.");
-    },
-  });
+  // TanStack Query custom hooks
+  const sendOtpMutation = useSendOtp();
+  const verifyOtpMutation = useVerifyOtp((data) => {
+    const { user, accessToken, refreshToken } = data.data;
+    
+    // Store JWTs locally
+    localStorage.setItem("accessToken", accessToken);
+    localStorage.setItem("refreshToken", refreshToken);
 
-  // TanStack Query Verify OTP Mutation
-  const verifyOtpMutation = useMutation({
-    mutationFn: async (verificationData: { phone: string; code: string; name?: string; role?: string }) => {
-      const response = await axiosInstance.post("/auth/otp/verify", verificationData);
-      return response.data;
-    },
-    onSuccess: (data) => {
-      const { user, accessToken, refreshToken } = data.data;
-      
-      // Store JWTs locally
-      localStorage.setItem("accessToken", accessToken);
-      localStorage.setItem("refreshToken", refreshToken);
-
-      // Trigger context updates
-      onSuccess({
-        name: user.name,
-        email: user.email || `${user.phone}@keralance.dev`,
-        role: user.role,
-      });
-      setError("");
-      onClose();
-    },
-    onError: (err: any) => {
-      setError(err.response?.data?.error || "Invalid verification code.");
-    },
+    // Trigger context updates
+    onSuccess({
+      name: user.name,
+      email: user.email || `${user.phone}@keralance.dev`,
+      role: user.role,
+    });
+    setError("");
+    onClose();
   });
 
   if (!isOpen) return null;
@@ -79,7 +53,16 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
       return;
     }
 
-    sendOtpMutation.mutate(phone);
+    sendOtpMutation.mutate(phone, {
+      onSuccess: (data) => {
+        setDebugCode(data.debugCode || "");
+        setOtpSent(true);
+        setError("");
+      },
+      onError: (err: any) => {
+        setError(err.response?.data?.error || "Failed to send verification code. Try again.");
+      }
+    });
   };
 
   const handleVerifyOtp = (e: React.FormEvent) => {
@@ -96,6 +79,10 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
       code: otp,
       name: tab === "register" ? name : undefined,
       role: tab === "register" ? role : undefined,
+    }, {
+      onError: (err: any) => {
+        setError(err.response?.data?.error || "Invalid verification code.");
+      }
     });
   };
 
