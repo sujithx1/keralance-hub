@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Menu, X, ArrowUpRight, LogOut, User as UserIcon } from "lucide-react";
+import { Menu, X, ArrowUpRight, LogOut } from "lucide-react";
 import Logo from "./Logo";
 
 interface NavbarProps {
