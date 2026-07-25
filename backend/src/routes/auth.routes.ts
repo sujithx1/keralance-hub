@@ -120,20 +120,8 @@ authRouter.post("/otp/send", validateBody(sendOtpSchema), async (c) => {
   const { phone } = c.get("validBody" as any);
 
   const code = Math.floor(100000 + Math.random() * 900000).toString();
-  const codeHash = await Bun.password.hash(code, { algorithm: "argon2id" });
 
-  const expiresAt = new Date();
-  expiresAt.setMinutes(expiresAt.getMinutes() + 5); // 5 minute TTL
-
-  await db.delete(OtpTable).where(eq(OtpTable.phone, phone));
-
-  await db.insert(OtpTable).values({
-    phone,
-    codeHash,
-    expiresAt,
-  });
-
-  // Delegate dispatch to the decoupled SMS Service
+  // Delegate dispatch and in-memory caching to the decoupled SMS Service
   await smsService.sendOtp(phone, code);
 
   return c.json({
@@ -146,28 +134,10 @@ authRouter.post("/otp/send", validateBody(sendOtpSchema), async (c) => {
 authRouter.post("/otp/verify", validateBody(verifyOtpSchema), async (c) => {
   const { phone, code, name, role } = c.get("validBody" as any);
 
-  const [record] = await db
-    .select()
-    .from(OtpTable)
-    .where(eq(OtpTable.phone, phone))
-    .limit(1);
-
-  if (!record || new Date() > record.expiresAt) {
-    return c.json({ success: false, error: "OTP expired or not requested" }, 400);
-  }
-
-  if (record.attempts >= 3) {
-    await db.delete(OtpTable).where(eq(OtpTable.phone, phone));
-    return c.json({ success: false, error: "Too many failed attempts. Request a new OTP." }, 400);
-  }
-
-  const isValid = await Bun.password.verify(code, record.codeHash);
+  // Validate OTP locally inside SmsService cache
+  const isValid = await smsService.verifyOtp(phone, code);
   if (!isValid) {
-    await db
-      .update(OtpTable)
-      .set({ attempts: record.attempts + 1 })
-      .where(eq(OtpTable.id, record.id));
-    return c.json({ success: false, error: "Invalid OTP code" }, 400);
+    return c.json({ success: false, error: "Invalid, expired, or rate-limited verification code" }, 400);
   }
 
   let user = await db
@@ -215,8 +185,6 @@ authRouter.post("/otp/verify", validateBody(verifyOtpSchema), async (c) => {
     token: refreshToken,
     expiresAt: refreshExpires,
   });
-
-  await db.delete(OtpTable).where(eq(OtpTable.phone, phone));
 
   return c.json({
     success: true,
