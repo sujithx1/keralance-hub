@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, Lock, Mail, User, Shield, Sparkles } from "lucide-react";
+import { X, User, Shield, Sparkles, Phone, Lock } from "lucide-react";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -10,58 +10,90 @@ interface AuthModalProps {
 export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
   const [tab, setTab] = useState<"login" | "register">("login");
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState("");
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [debugCode, setDebugCode] = useState("");
   const [role, setRole] = useState<"admin" | "user" | "freelancer">("freelancer");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    
+    if (!phone) {
+      setError("Phone number is required");
+      return;
+    }
+
+    if (tab === "register" && !name) {
+      setError("Name is required");
+      return;
+    }
+
     setLoading(true);
 
-    // Simulate Auth API communication
+    // Simulate OTP dispatch
     setTimeout(() => {
       setLoading(false);
-      if (tab === "login") {
-        if (!email || !password) {
-          setError("All fields are required");
-          return;
-        }
-        
-        // Auto-assign role based on email helper for testing if not custom admin
-        let userRole: "admin" | "user" | "freelancer" = "freelancer";
-        let userName = email.split("@")[0];
-        userName = userName.charAt(0).toUpperCase() + userName.slice(1);
+      // Hardcode demo codes or random ones
+      const randomCode = Math.floor(100000 + Math.random() * 900000).toString();
+      setDebugCode(randomCode);
+      setOtpSent(true);
+    }, 800);
+  };
 
-        if (email.includes("admin")) {
-          userRole = "admin";
-        } else if (email.includes("client") || email.includes("user")) {
-          userRole = "user";
-        }
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
 
-        onSuccess({
-          name: userName,
-          email,
-          role: userRole,
-        });
-      } else {
-        if (!name || !email || !password) {
-          setError("All fields are required");
-          return;
-        }
+    if (!otp) {
+      setError("Please enter the verification code");
+      return;
+    }
 
-        onSuccess({
-          name,
-          email,
-          role,
-        });
+    setLoading(true);
+
+    setTimeout(() => {
+      setLoading(false);
+      if (otp !== debugCode && otp !== "123456") {
+        setError("Invalid verification code");
+        return;
       }
+
+      // Determine user credentials based on input parameters
+      let userName = name || "Member";
+      let userRole = role;
+
+      // Map special default admin account values
+      if (phone === "7994591023") {
+        userName = "sujith";
+        userRole = "admin";
+      } else if (phone === "7994591024") {
+        userName = "Gautham Krishna";
+        userRole = "user";
+      } else if (phone === "7994591025") {
+        userName = "Ananya Pillai";
+        userRole = "user";
+      }
+
+      onSuccess({
+        name: userName,
+        email: `${phone}@keralance.dev`,
+        role: userRole,
+      });
       onClose();
     }, 800);
+  };
+
+  const handleReset = () => {
+    setOtpSent(false);
+    setOtp("");
+    setDebugCode("");
+    setError("");
   };
 
   return (
@@ -98,105 +130,125 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
           </div>
 
           {/* Tabs */}
-          <div className="flex border-b border-primary/10 mb-6">
-            <button
-              onClick={() => { setTab("login"); setError(""); }}
-              className={`flex-1 pb-3 text-sm font-heading font-bold transition-all relative cursor-pointer ${
-                tab === "login" ? "text-primary" : "text-text-muted hover:text-primary"
-              }`}
-            >
-              Sign In
-              {tab === "login" && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.7 bg-primary rounded-full" />
-              )}
-            </button>
-            <button
-              onClick={() => { setTab("register"); setError(""); }}
-              className={`flex-1 pb-3 text-sm font-heading font-bold transition-all relative cursor-pointer ${
-                tab === "register" ? "text-primary" : "text-text-muted hover:text-primary"
-              }`}
-            >
-              Register
-              {tab === "register" && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.7 bg-primary rounded-full" />
-              )}
-            </button>
-          </div>
+          {!otpSent && (
+            <div className="flex border-b border-primary/10 mb-6">
+              <button
+                onClick={() => { setTab("login"); handleReset(); }}
+                className={`flex-1 pb-3 text-sm font-heading font-bold transition-all relative cursor-pointer ${
+                  tab === "login" ? "text-primary" : "text-text-muted hover:text-primary"
+                }`}
+              >
+                Sign In
+                {tab === "login" && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.7 bg-primary rounded-full" />
+                )}
+              </button>
+              <button
+                onClick={() => { setTab("register"); handleReset(); }}
+                className={`flex-1 pb-3 text-sm font-heading font-bold transition-all relative cursor-pointer ${
+                  tab === "register" ? "text-primary" : "text-text-muted hover:text-primary"
+                }`}
+              >
+                Register
+                {tab === "register" && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.7 bg-primary rounded-full" />
+                )}
+              </button>
+            </div>
+          )}
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={otpSent ? handleVerifyOtp : handleSendOtp} className="space-y-4">
             {error && (
               <div className="p-3.5 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs font-semibold">
                 {error}
               </div>
             )}
 
-            {tab === "register" && (
-              <div className="space-y-1">
-                <label className="text-[10px] uppercase tracking-wider font-heading font-bold text-text-muted block">Full Name</label>
-                <div className="relative">
-                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted" />
-                  <input
-                    type="text"
-                    required
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Enter your name"
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-primary/10 bg-bg-base/40 focus:bg-white text-xs sm:text-sm focus:outline-hidden focus:ring-2 focus:ring-primary/20"
-                  />
-                </div>
+            {otpSent && (
+              <div className="p-3.5 bg-accent/10 border border-accent/20 rounded-xl text-primary text-xs font-semibold text-center animate-pulse">
+                🔑 Demo Verification Code: <span className="text-accent text-sm font-bold">{debugCode}</span>
               </div>
             )}
 
-            <div className="space-y-1">
-              <label className="text-[10px] uppercase tracking-wider font-heading font-bold text-text-muted block">Email Address</label>
-              <div className="relative">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted" />
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@example.com"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-primary/10 bg-bg-base/40 focus:bg-white text-xs sm:text-sm focus:outline-hidden focus:ring-2 focus:ring-primary/20"
-                />
-              </div>
-              {tab === "login" && (
-                <span className="text-[9px] text-text-muted mt-1 block italic">
-                  💡 Hint: Use "client" or "admin" in email to simulate those roles
-                </span>
-              )}
-            </div>
+            {!otpSent ? (
+              <>
+                {tab === "register" && (
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase tracking-wider font-heading font-bold text-text-muted block">Full Name</label>
+                    <div className="relative">
+                      <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted" />
+                      <input
+                        type="text"
+                        required
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Enter your name"
+                        className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-primary/10 bg-bg-base/40 focus:bg-white text-xs sm:text-sm focus:outline-hidden focus:ring-2 focus:ring-primary/20"
+                      />
+                    </div>
+                  </div>
+                )}
 
-            <div className="space-y-1">
-              <label className="text-[10px] uppercase tracking-wider font-heading font-bold text-text-muted block">Password</label>
-              <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted" />
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-primary/10 bg-bg-base/40 focus:bg-white text-xs sm:text-sm focus:outline-hidden focus:ring-2 focus:ring-primary/20"
-                />
-              </div>
-            </div>
-
-            {tab === "register" && (
-              <div className="space-y-1">
-                <label className="text-[10px] uppercase tracking-wider font-heading font-bold text-text-muted block">I want to join as</label>
-                <div className="relative">
-                  <Shield className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted" />
-                  <select
-                    value={role}
-                    onChange={(e) => setRole(e.target.value as any)}
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-primary/10 bg-bg-base/40 focus:bg-white text-xs sm:text-sm focus:outline-hidden focus:ring-2 focus:ring-primary/20 appearance-none cursor-pointer"
-                  >
-                    <option value="freelancer">Freelancer (Sell services)</option>
-                    <option value="user">Client (Hire freelancers)</option>
-                  </select>
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase tracking-wider font-heading font-bold text-text-muted block">Phone Number</label>
+                  <div className="relative">
+                    <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted" />
+                    <input
+                      type="tel"
+                      required
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="e.g. 7994591023"
+                      className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-primary/10 bg-bg-base/40 focus:bg-white text-xs sm:text-sm focus:outline-hidden focus:ring-2 focus:ring-primary/20"
+                    />
+                  </div>
+                  {tab === "login" && (
+                    <span className="text-[9px] text-text-muted mt-1 block italic">
+                      💡 Hint: Use admin phone "7994591023" or client phone "7994591024" to test roles
+                    </span>
+                  )}
                 </div>
+
+                {tab === "register" && (
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase tracking-wider font-heading font-bold text-text-muted block">I want to join as</label>
+                    <div className="relative">
+                      <Shield className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted" />
+                      <select
+                        value={role}
+                        onChange={(e) => setRole(e.target.value as any)}
+                        className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-primary/10 bg-bg-base/40 focus:bg-white text-xs sm:text-sm focus:outline-hidden focus:ring-2 focus:ring-primary/20 appearance-none cursor-pointer"
+                      >
+                        <option value="freelancer">Freelancer (Sell services)</option>
+                        <option value="user">Client (Hire freelancers)</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase tracking-wider font-heading font-bold text-text-muted block">Verification Code (OTP)</label>
+                <div className="relative">
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted" />
+                  <input
+                    type="text"
+                    required
+                    maxLength={6}
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    placeholder="Enter 6-digit code"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-primary/10 bg-bg-base/40 focus:bg-white text-xs sm:text-sm focus:outline-hidden focus:ring-2 focus:ring-primary/20 text-center tracking-widest font-bold"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  className="text-[10px] text-primary hover:underline mt-1.5 block cursor-pointer"
+                >
+                  ← Change phone number
+                </button>
               </div>
             )}
 
@@ -208,7 +260,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
               {loading ? (
                 <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
-                <span>{tab === "login" ? "Sign In" : "Create Account"}</span>
+                <span>{otpSent ? "Verify & Continue" : "Send Verification Code"}</span>
               )}
             </button>
           </form>
