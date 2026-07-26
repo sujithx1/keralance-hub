@@ -15,6 +15,7 @@ import { db } from "../db/connection";
 import { OtpTable, RefreshTokenTable, UserTable } from "../schema/db.schema";
 import { eq, and } from "drizzle-orm";
 import { smsService } from "../services/sms.service";
+import { isProduction } from "@/config/env";
 
 const authRouter = new Hono();
 
@@ -121,13 +122,17 @@ authRouter.post("/otp/send", validateBody(sendOtpSchema), async (c) => {
 
   const code = Math.floor(100000 + Math.random() * 900000).toString();
 
-  // Delegate dispatch and in-memory caching to the decoupled SMS Service
-  await smsService.sendOtp(phone, code);
+
+  if(isProduction){
+
+    // Delegate dispatch and in-memory caching to the decoupled SMS Service
+    await smsService.sendOtp(phone, code);
+  }
 
   return c.json({
     success: true,
     message: "OTP sent successfully to phone",
-    debugCode: code,
+    debugCode: !isProduction ? code : undefined,
   });
 });
 
