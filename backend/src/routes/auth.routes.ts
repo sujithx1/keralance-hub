@@ -123,11 +123,8 @@ authRouter.post("/otp/send", validateBody(sendOtpSchema), async (c) => {
   const code = Math.floor(100000 + Math.random() * 900000).toString();
 
 
-  if(isProduction){
-
-    // Delegate dispatch and in-memory caching to the decoupled SMS Service
-    await smsService.sendOtp(phone, code);
-  }
+  // Delegate dispatch and in-memory caching to the decoupled SMS Service
+  await smsService.sendOtp(phone, code);
 
   return c.json({
     success: true,

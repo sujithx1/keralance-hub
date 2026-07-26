@@ -1,6 +1,5 @@
-import { env } from "@/config/env";
+import { env, isProduction } from "@/config/env";
 import { logger } from "../lib/logger";
-import twilio from "twilio";
 
 export interface OtpRecord {
   codeHash: string;
@@ -9,26 +8,12 @@ export interface OtpRecord {
 }
 
 export class SmsService {
-  private client: any = null;
   // In-memory cache to store OTPs without depending on PostgreSQL
   private otpCache = new Map<string, OtpRecord>();
 
-  constructor() {
-    const sid = env.TWILIO_ACCOUNT_SID;
-    const token = env.TWILIO_AUTH_TOKEN;
-    
-    if (sid && token) {
-      try {
-        this.client = twilio(sid, token);
-        logger.info("📱 [SMS Service] Twilio client initialized successfully.");
-      } catch (err: any) {
-        logger.error(err, "⚠️ [SMS Service] Failed to initialize Twilio client with credentials.");
-      }
-    }
-  }
-
   /**
    * Sends an OTP code to a designated phone number and saves it in the local cache.
+   * Dispatches live Exotel REST calls in production if credentials are provided.
    * 
    * @param phone The recipient's phone number in E.164 format (e.g. +917994591023)
    * @param code The 6-digit verification code string
@@ -59,24 +44,46 @@ export class SmsService {
       attempts: 0,
     });
 
-    const fromNumber = env.TWILIO_PHONE_NUMBER;
+    const apiKey = env.EXOTEL_API_KEY;
+    const apiToken = env.EXOTEL_API_TOKEN;
+    const accountSid = env.EXOTEL_ACCOUNT_SID;
+    const senderId = env.EXOTEL_SENDER_ID;
     const smsBody = message || `Your keralance HUB verification code is: ${code}. It expires in 5 minutes.`;
 
-    if (this.client && fromNumber) {
+    // Only dispatch external SMS in production and if credentials exist
+    if (isProduction && apiKey && apiToken && accountSid && senderId) {
       try {
-        await this.client.messages.create({
-          body: smsBody,
-          from: fromNumber,
-          to: formattedPhone,
+        const authHeader = `Basic ${Buffer.from(`${apiKey}:${apiToken}`).toString("base64")}`;
+        const exotelUrl = `https://api.exotel.com/v1/Accounts/${accountSid}/Sms/send.json`;
+
+        // URL encoded parameters
+        const details = new URLSearchParams();
+        details.append("From", senderId);
+        details.append("To", formattedPhone);
+        details.append("Body", smsBody);
+
+        const response = await fetch(exotelUrl, {
+          method: "POST",
+          headers: {
+            "Authorization": authHeader,
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: details.toString(),
         });
-        logger.info(`✅ [SMS Service] Live Twilio SMS sent successfully to ${formattedPhone}`);
+
+        if (!response.ok) {
+          const errText = await response.text();
+          throw new Error(`Exotel API returned status ${response.status}: ${errText}`);
+        }
+
+        logger.info(`✅ [SMS Service] Live Exotel SMS sent successfully to ${formattedPhone}`);
         return true;
       } catch (err: any) {
-        logger.error(err, `❌ [SMS Service] Failed to send SMS via Twilio to ${phone}`);
+        logger.error(err, `❌ [SMS Service] Failed to send SMS via Exotel to ${formattedPhone}`);
         throw err;
       }
     } else {
-      logger.warn(`⚠️ [SMS Service] Twilio credentials or phone number missing. Mocking success for code: ${code}`);
+      logger.warn(`⚠️ [SMS Service] Non-production or Exotel config missing. Local mock verification cached for ${formattedPhone}. Code: ${code}`);
       return true;
     }
   }
